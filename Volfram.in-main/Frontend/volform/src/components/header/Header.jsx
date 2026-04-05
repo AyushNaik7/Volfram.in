@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Events", href: "/events" },
   { label: "Downloads", href: "/downloads" },
   { label: "Contact Us", href: "/contact" },
+  { label: "Login", href: "/login" }
 ];
 
 function Header() {
@@ -77,8 +78,8 @@ function Header() {
       >
         <div className="container-custom flex items-center justify-between gap-6">
           <Link to="/" className="flex items-center gap-3 group">
-            <span className="logo-plate inline-flex h-10 w-10 items-center justify-center rounded-md text-base font-bold text-white">
-              VS
+            <span className="logo-plate inline-flex pl-0  items-center justify-center rounded-md text-base font-bold text-white">
+              <img src="/Clients/logo.png" alt="Volfram Systems" />
             </span>
             <span>
               <span className="block font-heading font-bold text-primary text-xl tracking-wide group-hover:text-primary-dark transition-colors duration-200">

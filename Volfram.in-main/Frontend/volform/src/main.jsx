@@ -12,6 +12,8 @@ import Clients from './pages/Clients.jsx'
 import Downloads from './pages/Downloads.jsx'
 import Events from './pages/Events.jsx'
 import Gallery from './pages/Gallery.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -25,6 +27,9 @@ const router = createBrowserRouter(
         <Route path='downloads' element={<Downloads />} />
         <Route path='events' element={<Events />} />
         <Route path='gallery' element={<Gallery />} />
+        <Route path='login' element={<Login />} />
+        <Route path='register' element={<Register />} />
+        <Route path='*' element={<h1 className='text-center text-4xl mt-20'>404 Not Found</h1>} />
 
       
     </Route>

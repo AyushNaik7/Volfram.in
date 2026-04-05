@@ -91,7 +91,7 @@ export default function AboutUs() {
       </section>
 
       <section className="section-white py-0">
-        <img src={aboutImage} alt="Volfram team" className="h-[540px] w-full object-cover" />
+        <img src={"/AboutUs/image.png"} alt="Volfram team" className="h-[800px] w-full object-cover" />
       </section>
 
       <section className="section-white py-14">
@@ -108,13 +108,13 @@ export default function AboutUs() {
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <TextPanel title="Our Purpose" points={purposePoints} tone="dark" />
-          <img src={aboutImage} alt="Volfram presentation" className="h-[520px] w-full object-cover" />
+          <img src={"/AboutUs/imagecopy.png"} alt="Volfram presentation" className="h-[800px] w-full object-cover" />
         </div>
       </section>
 
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
-          <img src={aboutImage} alt="Volfram commitment" className="h-[520px] w-full object-cover md:order-1" />
+          <img src={"/AboutUs/imagecopy2.png"} alt="Volfram commitment" className="h-[800px] w-full object-cover md:order-1" />
           <div className="md:order-2">
             <TextPanel title="Our Commitment" points={commitmentPoints} tone="light" />
           </div>
@@ -124,7 +124,7 @@ export default function AboutUs() {
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <TextPanel title="Our Passion" points={passionPoints} tone="dark" />
-          <img src={aboutImage} alt="Volfram annual meet" className="h-[520px] w-full object-cover" />
+          <img src={"/AboutUs/imagecopy3.png"} alt="Volfram annual meet" className="h-[800px] w-full object-cover" />
         </div>
       </section>
     </div>

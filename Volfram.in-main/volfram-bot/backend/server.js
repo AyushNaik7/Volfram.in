@@ -6,6 +6,7 @@ const { calculatePRDS } = require('./calculators/prds');
 const { calculateSteamPipe } = require('./calculators/steamPipe');
 
 const app = express();
+console.log("API KEY:", process.env.OPENROUTER_API_KEY);
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
@@ -167,22 +168,24 @@ Rules:
 
   try {
     const openrouterRes = await fetch(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-001',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-          ],
-        }),
-      }
-    );
+  'https://openrouter.ai/api/v1/chat/completions',
+  {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'http://localhost:8000', // ✅ ADD THIS
+      'X-Title': 'Volfram Chatbot' // ✅ ADD THIS
+    },
+    body: JSON.stringify({
+      model:  'openai/gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+    }),
+  }
+);
 
     const aiData = await openrouterRes.json();
     console.log('🤖 OpenRouter status:', openrouterRes.status);

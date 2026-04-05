@@ -67,10 +67,17 @@ const products = [
 
 export default function Home() {
   return (
+    
     <div className="page-shell">
+      <img
+              src="/Clients/homepage.png"
+              alt="Boiler Room"
+              className="h-full w-full object-cover object-center"
+            />
       <section className="hero-section py-20 md:py-24">
         <div className="container-custom relative z-10">
-          <div className="badge-industrial mb-5">Trusted Steam Engineering Since 2012</div>
+          <div className="badge-industrial mb-5 color:white">Trusted Steam Engineering Since 2012</div>
+          
           <h1 className="max-w-4xl text-4xl leading-tight text-white md:text-6xl md:leading-tight">
             Engineering Solutions For A Changing Industrial World
           </h1>
@@ -88,6 +95,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      
 
       <section className="section-white">
         <div className="container-custom">
@@ -100,6 +108,7 @@ export default function Home() {
             </div>
             <span className="badge-industrial">Glorious 12 Years Serving The Industry</span>
           </div>
+          
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
@@ -113,12 +122,22 @@ export default function Home() {
                 <p className="mt-2 text-sm">{label}</p>
               </article>
             ))}
+
           </div>
         </div>
+        
       </section>
+      
 
       <section className="section-light">
+        
         <div className="container-custom">
+          <img
+              src="/Clients/homepage2.png"
+              alt="Boiler Room"
+              className="h-full w-full object-cover object-center"
+            />
+            <br />
           <h2 className="text-3xl md:text-4xl">Recent Highlights</h2>
           <p className="mt-2 max-w-3xl">Events, product launches and field stories from the boiler world.</p>
           <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -138,6 +157,12 @@ export default function Home() {
 
       <section className="section-dark">
         <div className="container-custom">
+          <img
+              src="/Clients/homepage3.png"
+              alt="Boiler Room"
+              className="h-full w-full object-cover object-center"
+            />
+            <br />
           <h2 className="text-3xl md:text-4xl">Together We Make Industry Efficient And Safe</h2>
           <p className="subtext mt-3 max-w-3xl">
             Specialized steam engineering for regulated and high-performance environments.

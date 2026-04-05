@@ -43,7 +43,17 @@ export default function Services() {
           <p className="mt-6 max-w-3xl text-lg text-slate-100">
             From generation to distribution and control, we deliver complete support for efficient and safe steam operations.
           </p>
+          <img src="/Services/image1.png" alt="" />
         </div>
+      </section>
+      <section>
+          <div className="container-custom">
+            <h2 className="text-3xl text-primary">Our Expertise</h2>
+            <p className="mt-4 text-lg text-text-secondary">
+              With decades of experience, our team of engineers and technicians are experts in steam system design, installation and maintenance. We understand the unique challenges of steam applications across industries and are committed to delivering solutions that optimize performance, reduce costs and ensure safety.
+            </p>
+            <img src="/Services/image2.png" alt="" />
+          </div>
       </section>
 
       <section className="section-white">
@@ -73,6 +83,7 @@ export default function Services() {
           </div>
           <Link to="/contact" className="btn-outline-white">Request Consultation</Link>
         </div>
+      
       </section>
     </div>
   );
