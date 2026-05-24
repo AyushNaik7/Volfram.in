@@ -14,11 +14,14 @@ import Events from './pages/Events.jsx'
 import Gallery from './pages/Gallery.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
+import AdminPage from './pages/AdminPage.jsx'
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path="/" element={<Layout />}>
-       <Route path='' element={<Home />} />
+    <>
+      {/* Main site — with Header and Footer */}
+      <Route path="/" element={<Layout />}>
+        <Route path='' element={<Home />} />
         <Route path='about' element={<About />} />
         <Route path='contact' element={<Contact />} />
         <Route path='services' element={<Services />} />
@@ -30,9 +33,11 @@ const router = createBrowserRouter(
         <Route path='login' element={<Login />} />
         <Route path='register' element={<Register />} />
         <Route path='*' element={<h1 className='text-center text-4xl mt-20'>404 Not Found</h1>} />
+      </Route>
 
-      
-    </Route>
+      {/* Admin dashboard — NO Header or Footer, standalone full page */}
+      <Route path="/admin" element={<AdminPage />} />
+    </>
   )
 );
 

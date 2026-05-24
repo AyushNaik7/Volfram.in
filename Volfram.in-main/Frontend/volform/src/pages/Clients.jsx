@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchSectionImages } from '../services/api';
 
 const sectors = [
   { name: "Pharmaceutical & Chemical", count: "170+" },
@@ -102,6 +103,19 @@ const testimonials = [
 ];
 
 export default function Clients() {
+  const [dbPhotos, setDbPhotos] = useState([]);
+
+  useEffect(() => {
+    fetchSectionImages('clients').then(imgs => {
+      if (imgs.length > 0) {
+        setDbPhotos(imgs.map(img => ({ img: `http://localhost:7000${img.imageUrl}` })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Use DB photos if available, else hardcoded
+  const displayPhotos = dbPhotos.length > 0 ? dbPhotos : photo;
+
   return (
     <div className="page-shell">
       
@@ -172,7 +186,7 @@ export default function Clients() {
           </h2>
 
           <div className="mt-8 grid grid-cols-4 gap-4 md:grid-cols-4 lg:grid-cols-6">
-            {photo.map((item, index) => (
+            {displayPhotos.map((item, index) => (
               <div
                 key={index}
                 className="bg-white p-3 rounded-xl shadow-sm hover:shadow-lg transition"
