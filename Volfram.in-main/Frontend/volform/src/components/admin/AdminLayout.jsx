@@ -27,7 +27,11 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
       {/* Sidebar */}
       <aside style={styles.sidebar}>
         <div style={styles.logo}>
-          <div style={styles.logoIcon}>V</div>
+          <img
+            src="/Clients/logo.png"
+            alt="Volfram Systems"
+            style={styles.logoImg}
+          />
           <h2 style={styles.logoText}>Volfram Admin</h2>
         </div>
 
@@ -112,18 +116,11 @@ const styles = {
     paddingBottom: '20px',
     borderBottom: '1px solid rgba(255,255,255,0.12)'
   },
-  logoIcon: {
-    width: '40px',
+  logoImg: {
     height: '40px',
-    background: 'linear-gradient(135deg, #146c8a, #d9732d)',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: '20px',
-    fontFamily: "'Sora', sans-serif"
+    width: 'auto',
+    objectFit: 'contain',
+    display: 'block'
   },
   logoText: {
     color: '#fff',
@@ -157,7 +154,8 @@ const styles = {
   navItemActive: {
     background: 'rgba(217,115,45,0.18)',
     color: '#fff',
-    borderLeft: '3px solid #d9732d'
+    borderLeft: '4px solid #d9732d',
+    paddingLeft: '11px'
   },
   navIcon: {
     fontSize: '17px'
