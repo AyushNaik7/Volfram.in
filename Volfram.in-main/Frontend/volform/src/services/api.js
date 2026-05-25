@@ -11,35 +11,49 @@ const api = axios.create({
   }
 });
 
-// Store access token in memory (NOT localStorage)
-let accessToken = null;
-
 /**
- * Set access token in memory
+ * Set access token in sessionStorage
  */
 export const setAccessToken = (token) => {
-  accessToken = token;
+  sessionStorage.setItem('volfram_access_token', token);
 };
 
 /**
- * Get access token from memory
+ * Get access token from sessionStorage
  */
 export const getAccessToken = () => {
-  return accessToken;
+  return sessionStorage.getItem('volfram_access_token');
 };
 
 /**
- * Clear access token from memory
+ * Clear access token from sessionStorage
  */
 export const clearAccessToken = () => {
-  accessToken = null;
+  sessionStorage.removeItem('volfram_access_token');
+  sessionStorage.removeItem('volfram_user');
+};
+
+/**
+ * Set user data in sessionStorage
+ */
+export const setUser = (user) => {
+  sessionStorage.setItem('volfram_user', JSON.stringify(user));
+};
+
+/**
+ * Get user data from sessionStorage
+ */
+export const getUser = () => {
+  const u = sessionStorage.getItem('volfram_user');
+  return u ? JSON.parse(u) : null;
 };
 
 // Request interceptor - add access token to headers
 api.interceptors.request.use(
   (config) => {
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    const token = getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
