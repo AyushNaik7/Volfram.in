@@ -23,6 +23,11 @@ const registerSchema = new mongoose.Schema({
         required: true,
         minlength: 6
     },
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user'
+    },
 
     createdAt: {
         type: Date,
