@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
-const User = require('../models/User');
+const User = require('../models/register.models.js');
 
 /**
  * Utility script to create an admin user
@@ -19,6 +19,7 @@ async function createAdminUser() {
       name: 'Admin User',
       email: 'admin@volfram.com',
       password: 'admin123', // Change this to a secure password
+      number: '9999999999',
       role: 'admin'
     };
 
@@ -38,6 +39,8 @@ async function createAdminUser() {
       name: adminData.name,
       email: adminData.email,
       password: hashedPassword,
+      number: adminData.number,
+      isVerified: true,
       role: adminData.role
     });
 
