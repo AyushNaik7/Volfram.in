@@ -75,7 +75,7 @@ api.interceptors.response.use(
       try {
         // Call refresh token endpoint
         const response = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );
@@ -105,7 +105,7 @@ export const authAPI = {
   // Login
   login: async (email, password) => {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/login`,
+      `${API_BASE_URL}/api/auth/login`,
       { email, password },
       { withCredentials: true }
     );
@@ -115,7 +115,7 @@ export const authAPI = {
   // Logout
   logout: async () => {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/logout`,
+      `${API_BASE_URL}/api/auth/logout`,
       {},
       { withCredentials: true }
     );
@@ -126,7 +126,7 @@ export const authAPI = {
   // Refresh token
   refresh: async () => {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/refresh`,
+      `${API_BASE_URL}/api/auth/refresh`,
       {},
       { withCredentials: true }
     );
