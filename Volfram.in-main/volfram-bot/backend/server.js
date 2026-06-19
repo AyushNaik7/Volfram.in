@@ -202,7 +202,7 @@ app.post("/api/chat", async (req, res) => {
           "X-Title": "Volfram Bot"
         },
         body: JSON.stringify({
-          model: "anthropic/claude-3.5-haiku",
+          model: "openai/gpt-4o-mini",
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             ...messages
