@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { authAPI, setAccessToken } from "../services/api";
 
 // Mock Link component for standalone preview
 const Link = ({ to, children, className }) => (
@@ -10,33 +12,36 @@ function Login() {
   const [password, setPassword] = useState('');
   const [focused, setFocused] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    try {
-        const response = await fetch('http://localhost:7000/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await response.json();
-          if (response.ok) {  
-            console.log('Login successful:', data);
-          } else {
-            console.error('Login failed:', data);
-          }
-      
-    } catch (error) {
-      
-    }
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      console.log('Email:', email);
-      console.log('Password:', password);
-      setEmail('');
-      setPassword('');
+    setError('');
+
+    try {
+      // Call new auth API with JWT
+      const response = await authAPI.login(email, password);
+      
+      // Store access token in memory (NOT localStorage)
+      setAccessToken(response.accessToken);
+      
+      console.log('Login successful:', response);
+      
+      // Redirect to admin dashboard if user is admin
+      if (response.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+      
+    } catch (error) {
+      console.error('Login failed:', error);
+      setError(error.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1800);
+    }
   };
 
   return (
@@ -397,7 +402,21 @@ function Login() {
           <h1 className="heading">Welcome back</h1>
           <p className="subheading">Sign in to continue your session</p>
 
-          <div onSubmit={handleSubmit}>
+          {error && (
+            <div style={{
+              padding: '12px',
+              background: '#fee',
+              border: '1px solid #fcc',
+              borderRadius: '8px',
+              color: '#c33',
+              fontSize: '14px',
+              marginBottom: '20px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
             {/* Email */}
             <div className={`field ${focused === 'email' ? 'is-focused' : ''}`}>
               <label htmlFor="email">Email address</label>
@@ -457,7 +476,7 @@ function Login() {
                 : 'Sign In'
               }
             </button>
-          </div>
+          </form>
 
           <div className="divider">
             <div className="divider-line" />

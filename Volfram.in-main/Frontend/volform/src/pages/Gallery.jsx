@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchSectionImages } from '../services/api';
 
 const categories = ["All Projects", "Boilers", "Installations", "Controls", "Maintenance"];
 
@@ -76,12 +77,32 @@ const galleryItems = [
 export default function Gallery() {
   const [activeCategory, setActiveCategory] = useState("All Projects");
   const [activeItem, setActiveItem] = useState(null);
+  const [dbImages, setDbImages] = useState([]);
+
+  // Fetch from DB on mount
+  useEffect(() => {
+    fetchSectionImages('gallery').then(imgs => {
+      if (imgs.length > 0) {
+        // Map DB images to same shape as hardcoded items
+        setDbImages(imgs.map(img => ({
+          name: img.caption || 'Gallery Image',
+          sub: '',
+          image: `http://localhost:7000${img.imageUrl}`,
+          category: 'All Projects',
+          _id: img._id
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Use DB images if available, else fallback to hardcoded
+  const sourceItems = dbImages.length > 0 ? dbImages : galleryItems;
 
   // ✅ Filtering logic
   const filteredItems =
     activeCategory === "All Projects"
-      ? galleryItems
-      : galleryItems.filter((item) => item.category === activeCategory);
+      ? sourceItems
+      : sourceItems.filter((item) => item.category === activeCategory);
 
   return (
     <div className="page-shell">

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { fetchSectionImages } from '../services/api';
 
 const eventGallery = [
   "/Events/image.png",
@@ -57,9 +58,71 @@ const events = [
 const toImageSrc = (path) => encodeURI(path);
 
 export default function Events() {
+  const [dbEventImages, setDbEventImages] = useState([]);
+
+  useEffect(() => {
+    fetchSectionImages('events').then(imgs => {
+      if (imgs.length > 0) {
+        setDbEventImages(imgs.map(img => `http://localhost:7000${img.imageUrl}`));
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Use DB images if available, else hardcoded
+  const sourceGallery = dbEventImages.length > 0 ? dbEventImages : eventGallery;
+
+  // Rebuild events array with dynamic source
+  const eventsWithImages = useMemo(() => [
+    {
+      id: "annual-2025",
+      title: "Annual Conference 2025-26",
+      date: "5th April, 2025",
+      location: "Mumbai, India",
+      description:
+        "Volfram Annual Conference celebrated our technical growth, stronger partner collaborations, and customer-focused steam innovation milestones.",
+      images: sourceGallery.slice(0, 18),
+    },
+    {
+      id: "boiler-india-2024",
+      title: "Boiler India 2024",
+      date: "Trade Exhibition",
+      location: "Mumbai, India",
+      description:
+        "Our team showcased process boiler automation, steam accessories, and smarter plant reliability strategies to industry leaders and EPC teams.",
+      images: sourceGallery.slice(18, 36),
+    },
+    {
+      id: "chemtech-2024",
+      title: "Chemtech 2024",
+      date: "Industrial Expo",
+      location: "Mumbai, India",
+      description:
+        "At Chemtech, we demonstrated compact steam solutions and live controls for chemical process operations requiring high uptime and efficiency.",
+      images: sourceGallery.slice(36, 54),
+    },
+    {
+      id: "annual-2024",
+      title: "Annual Conference 2024-25",
+      date: "6th April, 2024",
+      location: "Mumbai, India",
+      description:
+        "An internal strategy and celebration event focused on execution quality, engineering excellence, and customer-first service commitments.",
+      images: sourceGallery.slice(54, 72),
+    },
+    {
+      id: "boiler-world",
+      title: "Boiler World Expo",
+      date: "Global Connect",
+      location: "Industry Pavilion",
+      description:
+        "A global networking platform where we engaged with boiler professionals to exchange ideas around performance, safety, and sustainability.",
+      images: sourceGallery.slice(72, 90),
+    },
+  ], [sourceGallery]);
+
   const initialSlides = useMemo(
-    () => Object.fromEntries(events.map((event) => [event.id, 0])),
-    []
+    () => Object.fromEntries(eventsWithImages.map((event) => [event.id, 0])),
+    [eventsWithImages]
   );
 
   const [slides, setSlides] = useState(initialSlides);
@@ -116,7 +179,7 @@ export default function Events() {
       </section>
 
       <section className="bg-[#f1f3f6]">
-        {events.map((event, eventIndex) => {
+        {eventsWithImages.map((event, eventIndex) => {
           const isAlternate = eventIndex % 2 === 1;
           const activeIndex = slides[event.id] ?? 0;
           const activeImage = event.images[activeIndex];
