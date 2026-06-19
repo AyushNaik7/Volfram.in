@@ -25,7 +25,8 @@ function PageForm({ page, onClose }) {
       });
       
       if (page.imageUrl) {
-        setPreviewUrl(`http://localhost:7000${page.imageUrl}`);
+        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+        setPreviewUrl(`${API_URL}${page.imageUrl}`);
       }
     }
   }, [page]);

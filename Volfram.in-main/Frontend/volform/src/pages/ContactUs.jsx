@@ -41,7 +41,8 @@ const handleSubmit = async (e) => {
   setStatus("");
 
   try {
-    const response = await fetch("http://localhost:7000/api/enquiry", {
+    const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+    const response = await fetch(`${API_URL}/api/enquiry`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

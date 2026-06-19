@@ -63,7 +63,8 @@ export default function Events() {
   useEffect(() => {
     fetchSectionImages('events').then(imgs => {
       if (imgs.length > 0) {
-        setDbEventImages(imgs.map(img => `http://localhost:7000${img.imageUrl}`));
+        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+        setDbEventImages(imgs.map(img => `${API_URL}${img.imageUrl}`));
       }
     }).catch(() => {});
   }, []);

@@ -202,7 +202,8 @@ export const imageManagerAPI = {
  * Public image fetch (no auth) — used by website pages
  */
 export const fetchSectionImages = async (section) => {
-  const response = await fetch(`http://localhost:7000/api/public-images/${section}`);
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+  const response = await fetch(`${API_URL}/api/public-images/${section}`);
   const data = await response.json();
   return data.images || [];
 };

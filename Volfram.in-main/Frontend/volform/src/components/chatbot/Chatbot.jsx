@@ -42,7 +42,8 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat/chat', {
+      const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${CHATBOT_API_URL}/api/chat/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
