@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
+// Environment variable for chatbot API URL
+const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:8000";
+
 // ─── SUGGESTED QUESTIONS ─────────────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
   { label: "What products do you offer?", category: "products" },
@@ -208,7 +211,7 @@ export default function ChatWidget() {
     setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
     setChatLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/api/chat", {
+      const res = await axios.post(`${CHATBOT_API_URL}/api/chat`, {
         message: userMsg,
         session_id: sessionId,
       });
@@ -261,7 +264,7 @@ export default function ChatWidget() {
 
   const sendToBackend = async (finalParams) => {
     try {
-      await axios.post("http://localhost:8000/api/chat", {
+      await axios.post(`${CHATBOT_API_URL}/api/chat`, {
         message: `Customer confirmed quotation parameters:\n${buildSummary(finalParams)}`,
         session_id: sessionId,
         customer_email: null,
@@ -467,7 +470,7 @@ export default function ChatWidget() {
                         const userMsg = q.label;
                         setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
                         setChatLoading(true);
-                        axios.post("http://localhost:8000/api/chat", {
+                        axios.post(`${CHATBOT_API_URL}/api/chat`, {
                           message: userMsg,
                           session_id: sessionId,
                         }).then((res) => {
