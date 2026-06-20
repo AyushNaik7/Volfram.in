@@ -10,7 +10,8 @@ const sendEmail = async (email, token) => {
     }
   });
 
-  const verifyLink = `http://localhost:7000/api/verify/${token}`;
+  const API_URL = process.env.BACKEND_URL || 'http://localhost:7000';
+  const verifyLink = `${API_URL}/api/verify/${token}`;
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,

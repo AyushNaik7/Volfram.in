@@ -94,7 +94,7 @@ function PagesList() {
               {page.imageUrl && (
                 <div style={styles.imageContainer}>
                   <img
-                    src={`http://localhost:7000${page.imageUrl}`}
+                    src={`${import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000'}${page.imageUrl}`}
                     alt={page.title}
                     style={styles.image}
                   />

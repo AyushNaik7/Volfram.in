@@ -106,9 +106,10 @@ export default function Clients() {
   const [dbPhotos, setDbPhotos] = useState([]);
 
   useEffect(() => {
+    const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
     fetchSectionImages('clients').then(imgs => {
       if (imgs.length > 0) {
-        setDbPhotos(imgs.map(img => ({ img: `http://localhost:7000${img.imageUrl}` })));
+        setDbPhotos(imgs.map(img => ({ img: `${API_URL}${img.imageUrl}` })));
       }
     }).catch(() => {});
   }, []);

@@ -10,7 +10,7 @@ const SECTIONS = [
   { key: 'products', label: 'Products',  icon: '⚙️' },
 ];
 
-const BASE_URL = 'http://localhost:7000';
+const BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
 
 function ImageManager() {
   const [activeSection, setActiveSection] = useState('gallery');

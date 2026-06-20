@@ -26,7 +26,8 @@ function Register() {
       setStep(2);
     }, 1800);
     try{
-      const response = await fetch("http://localhost:7000/api/register", {
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+      const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

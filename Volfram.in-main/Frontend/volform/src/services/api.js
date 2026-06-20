@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:7000/api';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
   withCredentials: true, // Send cookies with requests
   headers: {
     'Content-Type': 'application/json'
@@ -75,7 +75,7 @@ api.interceptors.response.use(
       try {
         // Call refresh token endpoint
         const response = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );
@@ -105,7 +105,7 @@ export const authAPI = {
   // Login
   login: async (email, password) => {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/login`,
+      `${API_BASE_URL}/api/auth/login`,
       { email, password },
       { withCredentials: true }
     );
@@ -115,7 +115,7 @@ export const authAPI = {
   // Logout
   logout: async () => {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/logout`,
+      `${API_BASE_URL}/api/auth/logout`,
       {},
       { withCredentials: true }
     );
@@ -126,7 +126,7 @@ export const authAPI = {
   // Refresh token
   refresh: async () => {
     const response = await axios.post(
-      `${API_BASE_URL}/auth/refresh`,
+      `${API_BASE_URL}/api/auth/refresh`,
       {},
       { withCredentials: true }
     );
@@ -202,7 +202,8 @@ export const imageManagerAPI = {
  * Public image fetch (no auth) — used by website pages
  */
 export const fetchSectionImages = async (section) => {
-  const response = await fetch(`http://localhost:7000/api/public-images/${section}`);
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+  const response = await fetch(`${API_URL}/api/public-images/${section}`);
   const data = await response.json();
   return data.images || [];
 };
