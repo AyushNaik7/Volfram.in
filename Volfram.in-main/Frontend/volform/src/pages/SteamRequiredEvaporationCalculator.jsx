@@ -34,7 +34,7 @@ function SteamRequiredEvaporationCalculator() {
 
     try {
       const response = await axios.post(
-        "http://localhost:7000/api/calculators/steam-required-evaporation",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/steam-required-evaporation",
         {
           totalQuantity: Number(formData.totalQuantity),
           evaporationQuantity: Number(formData.evaporationQuantity),

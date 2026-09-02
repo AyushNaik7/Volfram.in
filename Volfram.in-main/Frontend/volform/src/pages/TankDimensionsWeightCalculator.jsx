@@ -63,7 +63,7 @@ function TankDimensionsWeightCalculator() {
       }
 
       const response = await fetch(
-        "http://localhost:7000/api/calculators/tank-dimensions-weight",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/tank-dimensions-weight",
         {
           method: "POST",
           headers: {

@@ -53,7 +53,7 @@ function HeatingCoolingSystemCalculator() {
       });
 
       const response = await axios.post(
-        "http://localhost:7000/api/calculators/heating-cooling-system",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/heating-cooling-system",
         requestData
       );
 

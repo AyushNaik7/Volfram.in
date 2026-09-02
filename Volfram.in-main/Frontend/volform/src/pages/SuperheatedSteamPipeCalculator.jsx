@@ -42,7 +42,7 @@ function SuperheatedSteamPipeCalculator() {
 
     try {
       const response = await axios.post(
-        "http://localhost:7000/api/calculators/superheated-steam-pipe/size",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/superheated-steam-pipe/size",
         {
           pressure: Number(formData.pressure),
           temperature: Number(formData.temperature),

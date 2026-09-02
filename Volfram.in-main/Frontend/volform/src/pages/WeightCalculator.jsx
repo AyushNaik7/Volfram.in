@@ -81,7 +81,7 @@ function WeightCalculator() {
       });
 
       const response = await axios.post(
-        "http://localhost:7000/api/calculators/weight-calculator",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/weight-calculator",
         requestData
       );
 

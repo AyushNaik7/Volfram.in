@@ -46,7 +46,7 @@ function CondensateFlashSteamCalculator() {
     try {
 
       const response = await fetch(
-        "http://localhost:7000/api/calculators/condensate-flash-steam-saving",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/condensate-flash-steam-saving",
         {
           method: "POST",
 

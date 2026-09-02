@@ -33,7 +33,7 @@ function FeedWaterTankTemperatureCalculator() {
 
     try {
       const response = await fetch(
-        "http://localhost:7000/api/calculators/feed-water-tank/final-temperature",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/feed-water-tank/final-temperature",
         {
           method: "POST",
           headers: {

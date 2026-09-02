@@ -30,7 +30,7 @@ function SafetyValveOrificeCalculator() {
 
     try {
       const response = await axios.post(
-        "http://localhost:7000/api/calculators/safety-valve/orifice",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/safety-valve/orifice",
         {
           setPressure: Number(formData.setPressure),
           reliefCapacity: Number(formData.reliefCapacity),

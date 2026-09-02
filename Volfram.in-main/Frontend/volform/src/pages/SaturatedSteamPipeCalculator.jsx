@@ -44,7 +44,7 @@ function SaturatedSteamPipeCalculator() {
             // Calculate Pipe Diameter
             if (mode === "diameter") {
                 url =
-                    "http://localhost:7000/api/calculators/saturated-steam-pipe/diameter";
+                    import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/saturated-steam-pipe/diameter";
 
                 payload = {
                     steamFlowRate: Number(formData.steamFlowRate),
@@ -56,7 +56,7 @@ function SaturatedSteamPipeCalculator() {
             // Calculate Pipe Capacity
             else {
                 url =
-                    "http://localhost:7000/api/calculators/saturated-steam-pipe/capacity";
+                    import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/saturated-steam-pipe/capacity";
 
                 payload = {
                     steamPressure: Number(formData.steamPressure),

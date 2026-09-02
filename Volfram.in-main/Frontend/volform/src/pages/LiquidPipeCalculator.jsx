@@ -73,7 +73,7 @@ function LiquidPipeCalculator() {
 
     try {
       const response = await fetch(
-        "http://localhost:7000/api/calculators/liquid-pipe/diameter",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/liquid-pipe/diameter",
         {
           method: "POST",
 
@@ -121,7 +121,7 @@ function LiquidPipeCalculator() {
 
     try {
       const response = await fetch(
-        "http://localhost:7000/api/calculators/liquid-pipe/capacity",
+        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/liquid-pipe/capacity",
         {
           method: "POST",
 
