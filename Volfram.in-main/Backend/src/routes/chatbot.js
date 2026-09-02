@@ -57,7 +57,7 @@ router.post('/chat/chat', async (req, res) => {
 
             // Determine which model to use based on API key type
             const isGroq = process.env.OPENAI_API_KEY.startsWith('gsk_');
-            const model = isGroq ? 'llama-3.1-70b-versatile' : 'gpt-3.5-turbo';
+            const model = isGroq ? 'llama-3.1-8b-instant' : 'gpt-3.5-turbo';
 
             console.log(`Using model: ${model} (Groq: ${isGroq})`);
 
@@ -155,7 +155,7 @@ router.post('/chat/chat', async (req, res) => {
 
         // Determine which model to use based on API key type
         const isGroq = process.env.OPENAI_API_KEY.startsWith('gsk_');
-        const model = isGroq ? 'llama-3.1-70b-versatile' : 'gpt-3.5-turbo';
+        const model = isGroq ? 'llama-3.1-8b-instant' : 'gpt-3.5-turbo';
 
         console.log(`Using model: ${model} (Groq: ${isGroq})`);
 
