@@ -26,8 +26,8 @@ Available Products:
 
 Ask questions one at a time to avoid overwhelming the customer. Be technical but friendly.`;
 
-// POST /api/chat - Handle chat messages
-router.post('/chat', async (req, res) => {
+// POST /api/chat/chat - Handle chat messages
+router.post('/chat/chat', async (req, res) => {
     try {
         const { message } = req.body;
 
