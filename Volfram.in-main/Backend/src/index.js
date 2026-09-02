@@ -21,6 +21,8 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://volfram-ashen.vercel.app',
+  'https://volfram-app.vercel.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -37,7 +39,7 @@ app.use(cors({
     }
 
     // Allow all Vercel preview deployments
-    if (origin.includes('vercel.app')) {
+    if (origin && origin.includes('vercel.app')) {
       return callback(null, true);
     }
 
