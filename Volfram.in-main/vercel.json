@@ -1,0 +1,12 @@
+{
+  "installCommand": "npm install --prefix Volfram.in-main/Volfram.in-main/Volfram.in-main/Frontend/volform",
+  "buildCommand": "cd Volfram.in-main/Volfram.in-main/Volfram.in-main/Frontend/volform && npm run build",
+  "outputDirectory": "Volfram.in-main/Volfram.in-main/Volfram.in-main/Frontend/volform/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
