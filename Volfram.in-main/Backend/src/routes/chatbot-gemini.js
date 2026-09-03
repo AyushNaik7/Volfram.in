@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { model } = require('../config/gemini-only');
 
 const SYSTEM_PROMPT = `You are a helpful quotation assistant for Volfram Systems India Pvt. Ltd., a boiler and steam system company.
 
@@ -33,8 +33,7 @@ router.post('/chat/chat', async (req, res) => {
             });
         }
 
-        // Check if API key is configured
-        if (!process.env.OPENAI_API_KEY) {
+        if (!model) {
             return res.status(503).json({
                 success: false,
                 error: 'Chatbot service is not configured.',
@@ -42,16 +41,12 @@ router.post('/chat/chat', async (req, res) => {
             });
         }
 
-        // Initialize Gemini
-        const genAI = new GoogleGenerativeAI(process.env.OPENAI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
-        // Generate response
+        // Generate response with FREE Gemini
         const prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}\n\nAssistant:`;
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
 
-        console.log('✅ Gemini response generated');
+        console.log('✅ FREE Gemini response generated');
 
         return res.json({
             success: true,
