@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { openai, config } = require('../config/openai');
+const { openai, gemini, config } = require('../config/openai');
 const supabase = require('../config/supabase');
 
 // System prompt with Volfram product knowledge
@@ -98,8 +98,36 @@ Ask questions one at a time to avoid overwhelming the customer. Be technical but
  * @returns {Promise<string>} - AI response text
  */
 async function generateAIResponse(messages) {
-    if (!openai || !config) {
+    if (!config) {
         throw new Error('LLM service is not configured');
+    }
+
+    // Handle Gemini (uses native SDK)
+    if (config.type === 'gemini') {
+        if (!gemini) {
+            throw new Error('Gemini client is not initialized');
+        }
+
+        // Gemini doesn't use system/user/assistant format, combine into prompt
+        let prompt = '';
+        for (const msg of messages) {
+            if (msg.role === 'system') {
+                prompt += msg.content + '\n\n';
+            } else if (msg.role === 'user') {
+                prompt += `User: ${msg.content}\n\n`;
+            } else if (msg.role === 'assistant') {
+                prompt += `Assistant: ${msg.content}\n\n`;
+            }
+        }
+        prompt += 'Assistant:';
+
+        const result = await gemini.generateContent(prompt);
+        return result.response.text();
+    }
+
+    // Handle OpenAI and Groq (use OpenAI SDK)
+    if (!openai) {
+        throw new Error('OpenAI client is not initialized');
     }
 
     const completion = await openai.chat.completions.create({
@@ -177,7 +205,7 @@ router.post('/chat/chat', async (req, res) => {
         }
 
         // Check if LLM is configured
-        if (!openai || !config) {
+        if (!config || (!openai && !gemini)) {
             const errorResponse = handleChatError(
                 new Error('LLM not configured'),
                 config?.provider,

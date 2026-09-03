@@ -1,9 +1,10 @@
 const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 /**
  * Detect LLM provider from API key prefix and return configuration
  * @param {string} apiKey - The API key from environment
- * @returns {{ provider: string, apiKey: string, baseURL: string|undefined, model: string }}
+ * @returns {{ provider: string, apiKey: string, baseURL: string|undefined, model: string, type: string }}
  */
 function detectProvider(apiKey) {
     if (!apiKey) {
@@ -14,6 +15,7 @@ function detectProvider(apiKey) {
     if (apiKey.startsWith('gsk_')) {
         return {
             provider: 'Groq',
+            type: 'openai',
             apiKey,
             baseURL: 'https://api.groq.com/openai/v1',
             model: process.env.LLM_MODEL_GROQ || 'openai/gpt-oss-120b'
@@ -24,15 +26,17 @@ function detectProvider(apiKey) {
     if (apiKey.startsWith('AIzaSy')) {
         return {
             provider: 'Google Gemini',
+            type: 'gemini',
             apiKey,
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-            model: process.env.LLM_MODEL_GEMINI || 'gemini-2.5-flash'
+            baseURL: null, // Gemini uses its own SDK, not OpenAI format
+            model: process.env.LLM_MODEL_GEMINI || 'gemini-1.5-flash'
         };
     }
 
     // OpenAI: typically starts with sk-, but treat anything else as OpenAI
     return {
         provider: 'OpenAI',
+        type: 'openai',
         apiKey,
         baseURL: undefined, // Use SDK default
         model: process.env.LLM_MODEL_OPENAI || 'gpt-4o-mini'
@@ -43,15 +47,23 @@ function detectProvider(apiKey) {
 const apiKey = process.env.OPENAI_API_KEY;
 let config = null;
 let openaiClient = null;
+let geminiClient = null;
 
 if (apiKey) {
     try {
         config = detectProvider(apiKey);
         
-        openaiClient = new OpenAI({
-            apiKey: config.apiKey,
-            baseURL: config.baseURL
-        });
+        if (config.type === 'gemini') {
+            // Use native Gemini SDK
+            const genAI = new GoogleGenerativeAI(config.apiKey);
+            geminiClient = genAI.getGenerativeModel({ model: config.model });
+        } else {
+            // Use OpenAI SDK for OpenAI and Groq
+            openaiClient = new OpenAI({
+                apiKey: config.apiKey,
+                baseURL: config.baseURL
+            });
+        }
 
         // Log provider detection at startup (never log the key itself)
         console.log(`🤖 LLM Provider: ${config.provider}`);
@@ -65,6 +77,7 @@ if (apiKey) {
 
 module.exports = {
     openai: openaiClient,
+    gemini: geminiClient,
     config,
     detectProvider
 };
