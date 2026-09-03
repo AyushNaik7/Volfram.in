@@ -40,8 +40,9 @@ function PRSSteamSavingCalculator() {
     setResult(null);
 
     try {
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
       const response = await axios.post(
-        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/prs-steam-saving",
+        `${API_BASE_URL}/api/calculators/prs-steam-saving`,
         {
           inletPressure: Number(formData.inletPressure),
           outletPressure: Number(formData.outletPressure),

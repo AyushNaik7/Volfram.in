@@ -52,8 +52,9 @@ function HeatingCoolingSystemCalculator() {
         requestData[key] = Number(formData[key]);
       });
 
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
       const response = await axios.post(
-        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/heating-cooling-system",
+        `${API_BASE_URL}/api/calculators/heating-cooling-system`,
         requestData
       );
 

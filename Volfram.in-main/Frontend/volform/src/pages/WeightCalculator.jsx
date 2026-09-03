@@ -80,10 +80,13 @@ function WeightCalculator() {
         }
       });
 
-      const response = await axios.post(
-        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/weight-calculator",
-        requestData
-      );
+      const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+
+const response = await axios.post(
+  `${API_BASE_URL}/api/calculators/weight-calculator`,
+  requestData
+);
 
       if (response.data.success) {
         setResult(response.data.data);

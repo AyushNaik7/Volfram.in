@@ -35,8 +35,9 @@ function AirCoolingLoadCalculator() {
     setResult(null);
 
     try {
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
       const response = await fetch(
-        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000",
+        `${API_BASE_URL}/api/calculators/air-cooling-load`,
         {
           method: "POST",
           headers: {

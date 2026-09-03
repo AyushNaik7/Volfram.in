@@ -44,8 +44,9 @@ function PipeWallThicknessCalculator() {
     setResult(null);
 
     try {
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
       const response = await axios.post(
-        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/pipe-wall-thickness",
+        `${API_BASE_URL}/api/calculators/pipe-wall-thickness`,
         {
           pipeType: formData.pipeType,
           materialGrade: formData.materialGrade,

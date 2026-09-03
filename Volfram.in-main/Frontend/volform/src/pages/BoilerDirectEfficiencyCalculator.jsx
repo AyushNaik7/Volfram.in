@@ -36,8 +36,9 @@ function BoilerDirectEfficiencyCalculator() {
     setResult(null);
 
     try {
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
       const response = await fetch(
-        import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000/api/calculators/boiler-direct-efficiency",
+        `${API_BASE_URL}/api/calculators/boiler-direct-efficiency`,
         {
           method: "POST",
 
