@@ -29,7 +29,7 @@ function detectProvider(apiKey) {
             type: 'gemini',
             apiKey,
             baseURL: null, // Gemini uses its own SDK, not OpenAI format
-            model: process.env.LLM_MODEL_GEMINI || 'gemini-1.5-flash'
+            model: process.env.LLM_MODEL_GEMINI || 'gemini-pro'
         };
     }
 
