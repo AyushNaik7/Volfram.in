@@ -7,10 +7,10 @@ if (!apiKey) {
 }
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-const model = genAI ? genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' }) : null;
+const model = genAI ? genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }) : null;
 
 if (model) {
-    console.log('✅ Using FREE Gemini AI (gemini-1.5-flash-8b)');
+    console.log('✅ Using FREE Gemini AI (gemini-1.5-flash)');
 }
 
 module.exports = { model };

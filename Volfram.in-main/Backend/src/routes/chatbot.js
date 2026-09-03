@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { openai, gemini, config } = require('../config/openai');
 const supabase = require('../config/supabase');
-const openai = require('../config/openai');
-const { isGemini, model: geminiModel } = require('../config/gemini');
 
 // System prompt with Volfram product knowledge
 const SYSTEM_PROMPT = `You are a helpful quotation assistant for Volfram Systems India Pvt. Ltd., a boiler and steam system company.
@@ -93,28 +92,142 @@ If a customer asks something not covered by the information above (e.g. detailed
 
 Ask questions one at a time to avoid overwhelming the customer. Be technical but friendly.`;
 
+/**
+ * Generate AI response using configured LLM provider
+ * @param {Array} messages - Array of chat messages
+ * @returns {Promise<string>} - AI response text
+ */
+async function generateAIResponse(messages) {
+    if (!config) {
+        throw new Error('LLM service is not configured');
+    }
+
+    // Handle Gemini (uses native SDK)
+    if (config.type === 'gemini') {
+        if (!gemini) {
+            throw new Error('Gemini client is not initialized');
+        }
+
+        // Gemini doesn't use system/user/assistant format, combine into prompt
+        let prompt = '';
+        for (const msg of messages) {
+            if (msg.role === 'system') {
+                prompt += msg.content + '\n\n';
+            } else if (msg.role === 'user') {
+                prompt += `User: ${msg.content}\n\n`;
+            } else if (msg.role === 'assistant') {
+                prompt += `Assistant: ${msg.content}\n\n`;
+            }
+        }
+        prompt += 'Assistant:';
+
+        const result = await gemini.generateContent(prompt);
+        return result.response.text();
+    }
+
+    // Handle OpenAI and Groq (use OpenAI SDK)
+    if (!openai) {
+        throw new Error('OpenAI client is not initialized');
+    }
+
+    const completion = await openai.chat.completions.create({
+        model: config.model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 1000
+    });
+
+    return completion.choices[0].message.content;
+}
+
+/**
+ * Classify error type and return appropriate response
+ */
+function handleChatError(error, provider, model) {
+    // Log detailed error for debugging
+    console.error('❌ Chat Error:');
+    console.error(`   Provider: ${provider || 'unknown'}`);
+    console.error(`   Model: ${model || 'unknown'}`);
+    console.error(`   Error: ${error.message}`);
+    
+    if (error.status) {
+        console.error(`   HTTP Status: ${error.status}`);
+    }
+
+    // Classify error type
+    let statusCode = 500;
+    let errorType = 'upstream_error';
+    let userMessage = 'Sorry, something went wrong. Please email steam@volfram.in for assistance.';
+
+    // Configuration/authentication errors (4xx-style)
+    if (error.status === 401 || error.status === 403) {
+        statusCode = 503;
+        errorType = 'authentication_error';
+        userMessage = 'Chatbot service is misconfigured. Please contact support.';
+    } else if (error.status === 404) {
+        statusCode = 503;
+        errorType = 'model_not_found';
+        userMessage = 'The AI model is unavailable. Please contact support.';
+    } else if (error.status === 429) {
+        statusCode = 503;
+        errorType = 'rate_limit';
+        userMessage = 'Service is temporarily busy. Please try again in a moment.';
+    } else if (!openai || !config) {
+        statusCode = 503;
+        errorType = 'not_configured';
+        userMessage = 'Chatbot service is not configured. Please contact support.';
+    }
+
+    return {
+        statusCode,
+        body: {
+            success: false,
+            error: errorType,
+            message: userMessage,
+            reply: userMessage,
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }
+    };
+}
+
 // POST /api/chat/chat - Handle chat messages
 router.post('/chat/chat', async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, conversationId, customerInfo } = req.body;
 
+        // Validate request
         if (!message) {
             return res.status(400).json({
                 success: false,
-                error: 'Message is required'
+                error: 'validation_error',
+                message: 'Message is required'
             });
         }
 
-        // Check if OpenAI API key is configured
-        if (!process.env.OPENAI_API_KEY) {
-            return res.status(503).json({
-                success: false,
-                error: 'Chatbot service is not configured. Please contact the administrator.',
-                reply: 'Sorry, the chatbot service is currently unavailable. Please email steam@volfram.in for assistance.'
-            });
+        // Check if LLM is configured
+        if (!config) {
+            console.error('❌ Config is null');
+            const errorResponse = handleChatError(
+                new Error('LLM not configured - config is null'),
+                'unknown',
+                'unknown'
+            );
+            return res.status(errorResponse.statusCode).json(errorResponse.body);
         }
 
-        // Check if Supabase is available
+        if (!openai && !gemini) {
+            console.error('❌ Both openai and gemini clients are null');
+            console.error(`   Config type: ${config.type}`);
+            console.error(`   Config provider: ${config.provider}`);
+            const errorResponse = handleChatError(
+                new Error('LLM client not initialized'),
+                config?.provider,
+                config?.model
+            );
+            return res.status(errorResponse.statusCode).json(errorResponse.body);
+        }
+
+        // Check if Supabase is available for conversation history
         if (!supabase) {
             // Simplified mode: Just respond with AI, no conversation history
             const chatMessages = [
@@ -122,32 +235,17 @@ router.post('/chat/chat', async (req, res) => {
                 { role: 'user', content: message }
             ];
 
-            // Determine which model to use based on API key type
-            const isGroq = process.env.OPENAI_API_KEY.startsWith('gsk_');
-            const model = isGroq ? 'openai/gpt-oss-120b' : 'gpt-4o-mini';
-
-            console.log(`Using model: ${model} (Groq: ${isGroq})`);
-
-            // Get AI response
-            const completion = await openai.chat.completions.create({
-                model: model,
-                messages: chatMessages,
-                temperature: 0.7,
-                max_tokens: 1000
-            });
-
-            const aiResponse = completion.choices[0].message.content;
+            const aiResponse = await generateAIResponse(chatMessages);
 
             return res.json({
                 success: true,
                 response: aiResponse,
-                reply: aiResponse,  // Add reply field for frontend compatibility
+                reply: aiResponse,
                 note: 'Running in simplified mode without conversation history'
             });
         }
 
-        // Full mode with Supabase (original code)
-        const { conversationId, customerInfo } = req.body;
+        // Full mode with Supabase conversation history
         let conversation;
         let customer;
 
@@ -211,7 +309,7 @@ router.post('/chat/chat', async (req, res) => {
             .eq('conversation_id', conversation.id)
             .order('created_at', { ascending: true });
 
-        // Prepare messages for OpenAI
+        // Prepare messages for LLM
         const chatMessages = [
             { role: 'system', content: SYSTEM_PROMPT },
             ...messages.map(msg => ({
@@ -220,21 +318,8 @@ router.post('/chat/chat', async (req, res) => {
             }))
         ];
 
-        // Determine which model to use based on API key type
-        const isGroq = process.env.OPENAI_API_KEY.startsWith('gsk_');
-        const model = isGroq ? 'openai/gpt-oss-120b' : 'gpt-4o-mini';
-
-        console.log(`Using model: ${model} (Groq: ${isGroq})`);
-
         // Get AI response
-        const completion = await openai.chat.completions.create({
-            model: model,
-            messages: chatMessages,
-            temperature: 0.7,
-            max_tokens: 1000
-        });
-
-        const aiResponse = completion.choices[0].message.content;
+        const aiResponse = await generateAIResponse(chatMessages);
 
         // Save AI response
         await supabase.from('messages').insert([{
@@ -247,15 +332,12 @@ router.post('/chat/chat', async (req, res) => {
             success: true,
             conversationId: conversation.id,
             response: aiResponse,
-            reply: aiResponse  // Add reply field for frontend compatibility
+            reply: aiResponse
         });
 
     } catch (error) {
-        console.error('Chat error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        const errorResponse = handleChatError(error, config?.provider, config?.model);
+        res.status(errorResponse.statusCode).json(errorResponse.body);
     }
 });
 
@@ -263,6 +345,14 @@ router.post('/chat/chat', async (req, res) => {
 router.get('/history/:conversationId', async (req, res) => {
     try {
         const { conversationId } = req.params;
+
+        if (!supabase) {
+            return res.status(503).json({
+                success: false,
+                error: 'not_configured',
+                message: 'Conversation history is not available'
+            });
+        }
 
         const { data: messages, error } = await supabase
             .from('messages')
@@ -281,7 +371,8 @@ router.get('/history/:conversationId', async (req, res) => {
         console.error('History error:', error);
         res.status(500).json({
             success: false,
-            error: error.message
+            error: 'history_error',
+            message: error.message
         });
     }
 });
