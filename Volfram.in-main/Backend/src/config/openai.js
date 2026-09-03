@@ -52,17 +52,22 @@ let geminiClient = null;
 if (apiKey) {
     try {
         config = detectProvider(apiKey);
+        console.log(`🔍 Detected provider type: ${config.type}`);
         
         if (config.type === 'gemini') {
             // Use native Gemini SDK
+            console.log('🔧 Initializing Gemini client...');
             const genAI = new GoogleGenerativeAI(config.apiKey);
             geminiClient = genAI.getGenerativeModel({ model: config.model });
+            console.log('✅ Gemini client initialized');
         } else {
             // Use OpenAI SDK for OpenAI and Groq
+            console.log('🔧 Initializing OpenAI client...');
             openaiClient = new OpenAI({
                 apiKey: config.apiKey,
                 baseURL: config.baseURL
             });
+            console.log('✅ OpenAI client initialized');
         }
 
         // Log provider detection at startup (never log the key itself)
@@ -70,6 +75,7 @@ if (apiKey) {
         console.log(`📦 Model: ${config.model}`);
     } catch (error) {
         console.error('❌ LLM Configuration Error:', error.message);
+        console.error(error);
     }
 } else {
     console.warn('⚠️  OPENAI_API_KEY is not set. Chatbot will not work.');

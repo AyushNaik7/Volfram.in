@@ -205,9 +205,22 @@ router.post('/chat/chat', async (req, res) => {
         }
 
         // Check if LLM is configured
-        if (!config || (!openai && !gemini)) {
+        if (!config) {
+            console.error('❌ Config is null');
             const errorResponse = handleChatError(
-                new Error('LLM not configured'),
+                new Error('LLM not configured - config is null'),
+                'unknown',
+                'unknown'
+            );
+            return res.status(errorResponse.statusCode).json(errorResponse.body);
+        }
+
+        if (!openai && !gemini) {
+            console.error('❌ Both openai and gemini clients are null');
+            console.error(`   Config type: ${config.type}`);
+            console.error(`   Config provider: ${config.provider}`);
+            const errorResponse = handleChatError(
+                new Error('LLM client not initialized'),
                 config?.provider,
                 config?.model
             );
