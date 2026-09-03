@@ -8,8 +8,9 @@ if (!apiKey) {
     process.exit(1);
 }
 
-// Default model - can be overridden with LLM_MODEL env var
-const model = process.env.LLM_MODEL || 'qwen/qwen-2-7b-instruct:free';
+// Default model - OpenRouter auto-router picks best available free model
+// Can be overridden with LLM_MODEL env var (e.g., z-ai/glm-5.2:free)
+const model = process.env.LLM_MODEL || 'openrouter/auto';
 
 // Initialize OpenAI client pointing to OpenRouter
 const openai = new OpenAI({
