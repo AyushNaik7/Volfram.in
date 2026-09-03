@@ -62,7 +62,7 @@ app.get("/", (req, res) => {
 const enquiryRoutes = require("./routes/enquiry.routes.js");
 const authRoutes = require("./routes/auth.routes.js");
 const adminRoutes = require("./routes/admin.routes.js");
-const chatbotRoutes = require("./routes/chatbot.js");
+const chatbotRoutes = require("./routes/chatbot-gemini.js");
 const quotationRoutes = require("./routes/quotation.js");
 const calculatorRoutes = require("./routes/calculator.routes");
 
