@@ -11,6 +11,17 @@ function detectProvider(apiKey) {
         throw new Error('OPENAI_API_KEY environment variable is not set');
     }
 
+    // OpenRouter: keys start with sk-or-
+    if (apiKey.startsWith('sk-or-')) {
+        return {
+            provider: 'OpenRouter',
+            type: 'openai',
+            apiKey,
+            baseURL: 'https://openrouter.ai/api/v1',
+            model: process.env.LLM_MODEL_OPENROUTER || 'google/gemini-flash-1.5'
+        };
+    }
+
     // Groq: keys start with gsk_
     if (apiKey.startsWith('gsk_')) {
         return {
@@ -61,13 +72,13 @@ if (apiKey) {
             geminiClient = genAI.getGenerativeModel({ model: config.model });
             console.log('✅ Gemini client initialized');
         } else {
-            // Use OpenAI SDK for OpenAI and Groq
-            console.log('🔧 Initializing OpenAI client...');
+            // Use OpenAI SDK for OpenAI, Groq, and OpenRouter
+            console.log('🔧 Initializing OpenAI-compatible client...');
             openaiClient = new OpenAI({
                 apiKey: config.apiKey,
                 baseURL: config.baseURL
             });
-            console.log('✅ OpenAI client initialized');
+            console.log('✅ OpenAI-compatible client initialized');
         }
 
         // Log provider detection at startup (never log the key itself)
