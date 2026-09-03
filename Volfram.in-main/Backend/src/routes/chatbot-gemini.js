@@ -44,7 +44,7 @@ router.post('/chat/chat', async (req, res) => {
 
         // Initialize Gemini
         const genAI = new GoogleGenerativeAI(process.env.OPENAI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
         // Generate response
         const prompt = `${SYSTEM_PROMPT}\n\nUser: ${message}\n\nAssistant:`;
