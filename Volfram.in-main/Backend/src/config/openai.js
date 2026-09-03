@@ -9,7 +9,7 @@ if (!apiKey) {
 }
 
 // Default model - can be overridden with LLM_MODEL env var
-const model = process.env.LLM_MODEL || 'google/gemma-2-9b-it:free';
+const model = process.env.LLM_MODEL || 'qwen/qwen-2-7b-instruct:free';
 
 // Initialize OpenAI client pointing to OpenRouter
 const openai = new OpenAI({
