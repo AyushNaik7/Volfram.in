@@ -22,8 +22,8 @@ function detectProvider(apiKey) {
         };
     }
 
-    // Google Gemini / AI Studio: keys start with AIzaSy
-    if (apiKey.startsWith('AIzaSy')) {
+    // Google Gemini / AI Studio: keys can start with AIzaSy or AQ.
+    if (apiKey.startsWith('AIzaSy') || apiKey.startsWith('AQ.')) {
         return {
             provider: 'Google Gemini',
             type: 'gemini',
