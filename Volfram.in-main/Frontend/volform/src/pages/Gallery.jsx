@@ -87,7 +87,8 @@ export default function Gallery() {
         // Map DB images to same shape as hardcoded items
         setDbImages(imgs.map(img => ({
           name: img.caption || 'Gallery Image',
-          sub: '',
+          sub: img.description || img.info || '',
+          info: img.info || '',
           image: `${API_URL}${img.imageUrl}`,
           category: 'All Projects',
           _id: img._id
@@ -140,21 +141,24 @@ export default function Gallery() {
           </div>
 
           {/* GALLERY GRID */}
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <div className="gallery-grid">
             {filteredItems.map((item, index) => (
               <article
                 key={index}
-                className="card cursor-pointer hover:scale-105 transition duration-300"
+                className="gallery-card card cursor-pointer"
                 onClick={() => setActiveItem(item)}
               >
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="mb-4 aspect-video w-full rounded-md object-cover"
+                  className="gallery-card__image"
                 />
-                <p className="text-sm font-semibold text-secondary">{item.category}</p>
-                <h3 className="mt-2 text-lg">{item.name}</h3>
-                <p className="text-muted">{item.sub}</p>
+                <div className="gallery-card__content">
+                  <p className="gallery-card__category">{item.category}</p>
+                  <h3>{item.name}</h3>
+                  {item.sub && <p className="gallery-card__description">{item.sub}</p>}
+                  {item.info && <p className="gallery-card__info">{item.info}</p>}
+                </div>
               </article>
             ))}
           </div>
@@ -174,11 +178,12 @@ export default function Gallery() {
             <img
               src={activeItem.image}
               alt={activeItem.name}
-              className="aspect-video w-full rounded-md object-cover"
+              className="gallery-modal__image"
             />
 
             <h2 className="mt-5 text-2xl text-primary">{activeItem.name}</h2>
-            <p className="mt-2 text-muted">{activeItem.sub}</p>
+            {activeItem.sub && <p className="mt-3 text-slate-600">{activeItem.sub}</p>}
+            {activeItem.info && <p className="mt-3 text-sm text-slate-500">{activeItem.info}</p>}
 
             <button
               className="btn-primary mt-6"

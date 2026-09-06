@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../config/supabase');
+const mongoose = require('mongoose');
+const ChatConversation = require('../models/ChatConversation.models.js');
+const Quotation = require('../models/Quotation.models.js');
 
 // POST /api/quotation/generate - Generate quotation
 router.post('/generate', async (req, res) => {
     try {
         const { conversationId, productDetails, calculations } = req.body;
 
-        // Get conversation and customer
-        const { data: conversation } = await supabase
-            .from('conversations')
-            .select('*, customers(*)')
-            .eq('id', conversationId)
-            .single();
+        if (!mongoose.isValidObjectId(conversationId)) {
+            return res.status(400).json({ success: false, error: 'A valid conversationId is required.' });
+        }
 
+        const conversation = await ChatConversation.findById(conversationId);
         if (!conversation) {
             return res.status(404).json({
                 success: false,
@@ -21,29 +21,16 @@ router.post('/generate', async (req, res) => {
             });
         }
 
-        // Generate quotation number
-        const quotationNumber = `VOL-${Date.now()}`;
-
-        // Calculate total price (simplified - you'll add complex logic)
-        const totalPrice = calculations.totalPrice || 0;
-
-        // Create quotation
-        const { data: quotation, error } = await supabase
-            .from('quotations')
-            .insert([{
-                conversation_id: conversationId,
-                customer_id: conversation.customer_id,
-                quotation_number: quotationNumber,
-                product_details: productDetails,
-                calculations: calculations,
-                total_price: totalPrice,
-                status: 'draft',
-                valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-            }])
-            .select()
-            .single();
-
-        if (error) throw error;
+        const quotation = await Quotation.create({
+            conversationId: conversation._id,
+            customerId: conversation.customerInfo?.id || conversation.customerInfo?.email || '',
+            customerInfo: conversation.customerInfo,
+            quotationNumber: `VOL-${Date.now()}`,
+            productDetails,
+            calculations: calculations || {},
+            totalPrice: calculations?.totalPrice || 0,
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        });
 
         res.json({
             success: true,
@@ -60,17 +47,14 @@ router.post('/generate', async (req, res) => {
 });
 
 // GET /api/quotation/:id - Get quotation
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (id === 'customer') return next();
 
-        const { data: quotation, error } = await supabase
-            .from('quotations')
-            .select('*, customers(*)')
-            .eq('id', id)
-            .single();
-
-        if (error) throw error;
+        if (!mongoose.isValidObjectId(id)) return res.status(400).json({ success: false, error: 'Invalid quotation id.' });
+        const quotation = await Quotation.findById(id);
+        if (!quotation) return res.status(404).json({ success: false, error: 'Quotation not found' });
 
         res.json({
             success: true,
@@ -91,13 +75,7 @@ router.get('/customer/:customerId', async (req, res) => {
     try {
         const { customerId } = req.params;
 
-        const { data: quotations, error } = await supabase
-            .from('quotations')
-            .select('*')
-            .eq('customer_id', customerId)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        const quotations = await Quotation.find({ customerId }).sort({ createdAt: -1 });
 
         res.json({
             success: true,

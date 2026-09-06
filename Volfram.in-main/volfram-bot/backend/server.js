@@ -2,7 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const { createClient } = require("@supabase/supabase-js");
+const mongoose = require("mongoose");
+const crypto = require("crypto");
 
 // Use global fetch (Node 18+) — no node-fetch needed
 const fetchFn = globalThis.fetch;
@@ -13,10 +14,16 @@ if (!fetchFn) {
 
 const app = express();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const chatbotLeadSchema = new mongoose.Schema({
+  sessionId: { type: String, required: true, unique: true, index: true },
+  customerName: { type: String, default: '' },
+  customerEmail: { type: String, default: '' },
+  customerPhone: { type: String, default: '' },
+  quoteDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
+  quoteSubmitted: { type: Boolean, default: false },
+  messages: [{ role: String, content: String, createdAt: { type: Date, default: Date.now } }]
+}, { timestamps: true });
+const Conversation = mongoose.model("ChatbotLead", chatbotLeadSchema, "chatbotleads");
 
 // CORS — allow localhost dev ports + production URL
 const allowedOrigins = [
@@ -41,6 +48,35 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+app.post('/api/chat/lead', async (req, res) => {
+  try {
+    const { session_id, customerInfo, quoteDetails, message } = req.body;
+    if (!session_id || !customerInfo?.name || !customerInfo?.email || !customerInfo?.phone) {
+      return res.status(400).json({ success: false, message: 'Session ID, name, email, and mobile number are required.' });
+    }
+
+    const lead = await Conversation.findOneAndUpdate(
+      { sessionId: session_id },
+      {
+        $set: {
+          customerName: customerInfo.name.trim(),
+          customerEmail: customerInfo.email.trim().toLowerCase(),
+          customerPhone: customerInfo.phone.trim(),
+          quoteDetails: quoteDetails || {},
+          quoteSubmitted: true
+        },
+        ...(message ? { $push: { messages: { role: 'user', content: message } } } : {})
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json({ success: true, conversationId: lead._id, lead });
+  } catch (error) {
+    console.error('MongoDB lead save failed:', error.message);
+    res.status(500).json({ success: false, message: 'Unable to save chatbot enquiry.' });
+  }
+});
 
 // ─── SYSTEM PROMPT ────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `
@@ -191,25 +227,18 @@ GENERAL Q&A GUIDELINES
 `;
 
 // ─── CHAT ENDPOINT ────────────────────────────────────────────────────────────
-app.post("/api/chat", async (req, res) => {
+app.post(["/api/chat", "/api/chat/chat"], async (req, res) => {
   try {
-    const { message, session_id, customer_email } = req.body;
+    const { message, customer_email, customerInfo, quoteDetails, quoteSubmitted, conversationId } = req.body;
+    const session_id = req.body.session_id || conversationId || crypto.randomUUID();
 
-    if (!message || !session_id) {
-      return res.status(400).json({ error: "message and session_id required" });
+    if (!message) {
+      return res.status(400).json({ error: "message is required" });
     }
 
     console.log(`\n📩 [${session_id}] User: ${message}`);
 
-    let { data: conv, error: fetchError } = await supabase
-      .from("conversations")
-      .select("*")
-      .eq("session_id", session_id)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error("Supabase fetch error:", fetchError.message);
-    }
+    const conv = await Conversation.findOne({ sessionId: session_id });
 
     let messages = conv?.messages || [];
     messages.push({ role: "user", content: message });
@@ -251,6 +280,7 @@ app.post("/api/chat", async (req, res) => {
     } catch (err) {
       console.error("OpenRouter call failed:", err.message);
     }
+    }
 
     messages.push({ role: "assistant", content: botReply });
 
@@ -266,28 +296,29 @@ app.post("/api/chat", async (req, res) => {
       }
     }
 
-    // ─── SAVE TO SUPABASE (non-fatal — don't let DB errors block the reply) ──
+    // ─── SAVE TO MONGODB (non-fatal — don't let DB errors block the reply) ──
     try {
       if (conv) {
-        const { error: updateErr } = await supabase
-          .from("conversations")
-          .update({
-            messages,
-            customer_email: customer_email || conv.customer_email,
-            updated_at: new Date()
-          })
-          .eq("session_id", session_id);
-        if (updateErr) console.error("Supabase update error:", updateErr.message);
+        conv.messages = messages;
+        conv.customerName = customerInfo?.name || conv.customerName;
+        conv.customerEmail = customerInfo?.email || customer_email || conv.customerEmail;
+        conv.customerPhone = customerInfo?.phone || conv.customerPhone;
+        if (quoteDetails) conv.quoteDetails = quoteDetails;
+        if (quoteSubmitted) conv.quoteSubmitted = true;
+        await conv.save();
       } else {
-        const { error: insertErr } = await supabase.from("conversations").insert({
-          session_id,
+        await Conversation.create({
+          sessionId: session_id,
           messages,
-          customer_email: customer_email || null
+          customerName: customerInfo?.name || '',
+          customerEmail: customerInfo?.email || customer_email || '',
+          customerPhone: customerInfo?.phone || '',
+          quoteDetails: quoteDetails || {},
+          quoteSubmitted: Boolean(quoteSubmitted)
         });
-        if (insertErr) console.error("Supabase insert error:", insertErr.message);
       }
     } catch (dbErr) {
-      console.error("Supabase save failed (non-fatal):", dbErr.message);
+      console.error("MongoDB save failed (non-fatal):", dbErr.message);
     }
 
     // Strip the PARAMS_COMPLETE line from what the customer sees
@@ -295,6 +326,7 @@ app.post("/api/chat", async (req, res) => {
 
     res.json({
       reply: cleanReply,
+      conversationId: conv?._id || (await Conversation.findOne({ sessionId: session_id }))?._id,
       paramsComplete,
       done: !!paramsComplete
     });
@@ -309,6 +341,9 @@ app.post("/api/chat", async (req, res) => {
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`🚀 Volfram bot running on port ${PORT}`);
-});
+mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI)
+  .then(() => app.listen(PORT, () => console.log(`🚀 Volfram bot running on port ${PORT}`)))
+  .catch(error => {
+    console.error('MongoDB connection failed:', error.message);
+    process.exit(1);
+  });

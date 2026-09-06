@@ -182,10 +182,13 @@ export const imageManagerAPI = {
   },
   
   // Upload multiple images to a section (with optional captions array)
-  uploadImages: async (section, files, captions = []) => {
+  uploadImages: async (section, files, captions = [], descriptions = [], infos = [], eventId = '') => {
     const formData = new FormData();
+    if (eventId) formData.append('eventId', eventId);
     Array.from(files).forEach((file) => formData.append('photos', file));
     captions.forEach((caption) => formData.append('captions', caption));
+    descriptions.forEach((description) => formData.append('descriptions', description));
+    infos.forEach((info) => formData.append('infos', info));
     const response = await api.post(`/admin/images/${section}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -197,6 +200,37 @@ export const imageManagerAPI = {
     const response = await api.delete(`/admin/images/${id}`);
     return response.data;
   }
+};
+
+export const usersAPI = {
+  getAll: async () => (await api.get('/users')).data
+};
+
+export const enquiriesAPI = {
+  getAll: async () => (await api.get('/enquiries')).data
+};
+
+export const requirementsAPI = {
+  create: async (payload) => (await api.post('/requirements', payload)).data,
+  getMine: async () => (await api.get('/requirements/my-requirements')).data,
+  getAll: async () => (await api.get('/requirements')).data,
+  updateStatus: async (id, status) => (await api.put(`/requirements/${id}/status`, { status })).data
+};
+
+export const eventsAPI = {
+  getAdmin: async () => (await api.get('/admin/events')).data,
+  create: async (payload) => (await api.post('/admin/events', payload)).data
+};
+
+export const chatbotLeadsAPI = {
+  getAll: async () => (await api.get('/admin/chatbot-leads')).data
+};
+
+export const fetchPublicEvents = async () => {
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+  const response = await fetch(`${API_URL}/api/public-events`);
+  const data = await response.json();
+  return data.events || [];
 };
 
 /**

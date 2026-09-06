@@ -5,6 +5,16 @@ const path = require('path');
 const fs = require('fs');
 const Page = require('../models/Page');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const ChatbotLead = require('../models/ChatbotLead.models.js');
+
+router.get('/chatbot-leads', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const leads = await ChatbotLead.find().sort({ updatedAt: -1 });
+    res.json({ leads });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to load chatbot enquiries.', error: error.message });
+  }
+});
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, '../../uploads');
@@ -268,17 +278,35 @@ router.post('/images/:section', authMiddleware, adminMiddleware, uploadMultiple.
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded.' });
     }
+
+    const eventId = typeof req.body.eventId === 'string' ? req.body.eventId.trim() : '';
+    if (section === 'events' && !eventId) {
+      return res.status(400).json({ message: 'Select an event before uploading photos.' });
+    }
     
     const captions = req.body.captions
       ? (Array.isArray(req.body.captions) ? req.body.captions : [req.body.captions])
       : [];
+    const descriptions = req.body.descriptions
+      ? (Array.isArray(req.body.descriptions) ? req.body.descriptions : [req.body.descriptions])
+      : [];
+    const infos = req.body.infos
+      ? (Array.isArray(req.body.infos) ? req.body.infos : [req.body.infos])
+      : [];
+
+    if (req.files.some((file, index) => !captions[index]?.trim() || !descriptions[index]?.trim() || !infos[index]?.trim())) {
+      return res.status(400).json({ message: 'Each image requires a title, description, and additional information.' });
+    }
     
     const savedImages = await Promise.all(
       req.files.map((file, index) =>
         new SiteImage({
           section,
+          eventId: section === 'events' ? eventId : '',
           imageUrl: `/uploads/${file.filename}`,
-          caption: captions[index] || ''
+          caption: captions[index].trim(),
+          description: descriptions[index].trim(),
+          info: infos[index].trim()
         }).save()
       )
     );

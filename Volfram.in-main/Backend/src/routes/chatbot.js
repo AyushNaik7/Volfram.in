@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { openai, model } = require('../config/openai');
-const supabase = require('../config/supabase');
+const mongoose = require('mongoose');
+const ChatbotLead = require('../models/ChatbotLead.models.js');
 
 // System prompt with Volfram product knowledge
 const SYSTEM_PROMPT = `You are a helpful quotation assistant for Volfram Systems India Pvt. Ltd., a boiler and steam system company.
@@ -92,10 +93,44 @@ If a customer asks something not covered by the information above (e.g. detailed
 
 Ask questions one at a time to avoid overwhelming the customer. Be technical but friendly.`;
 
+function handleChatError(error) {
+    console.error('Chat error:', error.message);
+    return 'Sorry, something went wrong. Please email steam@volfram.in for assistance.';
+}
+
+router.post('/chat/lead', async (req, res) => {
+    try {
+        const { session_id: sessionId, customerInfo, quoteDetails, message } = req.body;
+        if (!sessionId || !customerInfo?.name || !customerInfo?.email || !customerInfo?.phone) {
+            return res.status(400).json({ success: false, message: 'Session ID, name, email, and mobile number are required.' });
+        }
+
+        const lead = await ChatbotLead.findOneAndUpdate(
+            { sessionId },
+            {
+                $set: {
+                    customerName: customerInfo.name.trim(),
+                    customerEmail: customerInfo.email.trim().toLowerCase(),
+                    customerPhone: customerInfo.phone.trim(),
+                    quoteDetails: quoteDetails || {},
+                    quoteSubmitted: true
+                },
+                ...(message ? { $push: { messages: { role: 'user', content: message } } } : {})
+            },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        res.status(201).json({ success: true, conversationId: lead._id, lead });
+    } catch (error) {
+        console.error('Chatbot lead save error:', error);
+        res.status(500).json({ success: false, message: 'Unable to save chatbot enquiry.' });
+    }
+});
+
 // POST /api/chat/chat - Handle chat messages
 router.post('/chat/chat', async (req, res) => {
     try {
-        const { message, conversationId, customerInfo } = req.body;
+        const { message, conversationId, session_id: sessionId, customerInfo, quoteDetails, quoteSubmitted } = req.body;
 
         // Validate request
         if (!message) {
@@ -106,99 +141,48 @@ router.post('/chat/chat', async (req, res) => {
             });
         }
 
-        // Check if Supabase is available for conversation history
-        if (!supabase) {
-            // Simplified mode: Just respond with AI, no conversation history
-            const chatMessages = [
-                { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: message }
-            ];
-
-            const completion = await openai.chat.completions.create({
-                model: model,
-                messages: chatMessages,
-                temperature: 0.7,
-                max_tokens: 1000
-            });
-
-            const aiResponse = completion.choices[0].message.content;
-
-            return res.json({
-                success: true,
-                response: aiResponse,
-                reply: aiResponse,
-                note: 'Running in simplified mode without conversation history'
+        if (conversationId && !mongoose.isValidObjectId(conversationId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'validation_error',
+                message: 'Invalid conversation id'
             });
         }
 
-        // Full mode with Supabase conversation history
-        let conversation;
-        let customer;
+        let conversation = conversationId
+            ? await ChatbotLead.findById(conversationId)
+            : sessionId ? await ChatbotLead.findOne({ sessionId }) : null;
 
-        // Create or get customer
-        if (customerInfo && !conversationId) {
-            const { data: existingCustomer } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('email', customerInfo.email)
-                .single();
-
-            if (existingCustomer) {
-                customer = existingCustomer;
-            } else {
-                const { data: newCustomer, error } = await supabase
-                    .from('customers')
-                    .insert([customerInfo])
-                    .select()
-                    .single();
-
-                if (error) throw error;
-                customer = newCustomer;
-            }
+        if (conversationId && !conversation) {
+            return res.status(404).json({
+                success: false,
+                error: 'conversation_not_found',
+                message: 'Conversation not found'
+            });
         }
 
-        // Create or get conversation
-        if (!conversationId) {
-            const { data: newConversation, error } = await supabase
-                .from('conversations')
-                .insert([{
-                    customer_id: customer?.id,
-                    status: 'active',
-                    context: {}
-                }])
-                .select()
-                .single();
-
-            if (error) throw error;
-            conversation = newConversation;
-        } else {
-            const { data: existingConversation } = await supabase
-                .from('conversations')
-                .select('*')
-                .eq('id', conversationId)
-                .single();
-
-            conversation = existingConversation;
+        if (!conversation) {
+            conversation = new ChatbotLead({
+                sessionId: sessionId || new mongoose.Types.ObjectId().toString(),
+                customerName: customerInfo?.name || '',
+                customerEmail: customerInfo?.email || '',
+                customerPhone: customerInfo?.phone || ''
+            });
         }
 
-        // Save user message
-        await supabase.from('messages').insert([{
-            conversation_id: conversation.id,
-            role: 'user',
-            content: message
-        }]);
+        if (customerInfo) {
+            conversation.customerName = customerInfo.name || conversation.customerName;
+            conversation.customerEmail = customerInfo.email || conversation.customerEmail;
+            conversation.customerPhone = customerInfo.phone || conversation.customerPhone;
+        }
+        if (quoteDetails) conversation.quoteDetails = quoteDetails;
+        if (quoteSubmitted) conversation.quoteSubmitted = true;
 
-        // Get conversation history
-        const { data: messages } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conversation.id)
-            .order('created_at', { ascending: true });
+        conversation.messages.push({ role: 'user', content: message });
 
-        // Prepare messages for LLM
         const chatMessages = [
             { role: 'system', content: SYSTEM_PROMPT },
-            ...messages.map(msg => ({
+            ...conversation.messages.map(msg => ({
                 role: msg.role,
                 content: msg.content
             }))
@@ -214,16 +198,12 @@ router.post('/chat/chat', async (req, res) => {
 
         const aiResponse = completion.choices[0].message.content;
 
-        // Save AI response
-        await supabase.from('messages').insert([{
-            conversation_id: conversation.id,
-            role: 'assistant',
-            content: aiResponse
-        }]);
+        conversation.messages.push({ role: 'assistant', content: aiResponse });
+        await conversation.save();
 
         res.json({
             success: true,
-            conversationId: conversation.id,
+            conversationId: conversation._id,
             response: aiResponse,
             reply: aiResponse
         });
@@ -250,25 +230,18 @@ router.get('/history/:conversationId', async (req, res) => {
     try {
         const { conversationId } = req.params;
 
-        if (!supabase) {
-            return res.status(503).json({
-                success: false,
-                error: 'not_configured',
-                message: 'Conversation history is not available'
-            });
+        if (!mongoose.isValidObjectId(conversationId)) {
+            return res.status(400).json({ success: false, error: 'validation_error', message: 'Invalid conversation id' });
         }
 
-        const { data: messages, error } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
-
-        if (error) throw error;
+        const conversation = await ChatbotLead.findById(conversationId).select('messages');
+        if (!conversation) {
+            return res.status(404).json({ success: false, error: 'conversation_not_found', message: 'Conversation not found' });
+        }
 
         res.json({
             success: true,
-            messages
+            messages: conversation.messages
         });
 
     } catch (error) {

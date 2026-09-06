@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { imageManagerAPI } from '../../services/api';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { eventsAPI, imageManagerAPI } from '../../services/api';
 
 const SECTIONS = [
   { key: 'gallery',  label: 'Gallery',   icon: '🖼️' },
@@ -9,21 +9,32 @@ const SECTIONS = [
   { key: 'products', label: 'Products',  icon: '⚙️' },
 ];
 
+const DEFAULT_EVENT_OPTIONS = [
+  { id: 'annual-2025', title: 'Annual Conference 2025-26' },
+  { id: 'boiler-india-2024', title: 'Boiler India 2024' },
+  { id: 'chemtech-2024', title: 'Chemtech 2024' },
+  { id: 'annual-2024', title: 'Annual Conference 2024-25' },
+  { id: 'boiler-world', title: 'Boiler World Expo' }
+];
+
 const BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
 
 function ImageManager() {
   const [activeSection, setActiveSection]   = useState('gallery');
+  const [eventOptions, setEventOptions] = useState(DEFAULT_EVENT_OPTIONS);
+  const [selectedEventId, setSelectedEventId] = useState(DEFAULT_EVENT_OPTIONS[0].id);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [creatingEvent, setCreatingEvent] = useState(false);
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '', location: '' });
   const [images, setImages]                 = useState([]);
   const [loading, setLoading]               = useState(false);
   const [uploading, setUploading]           = useState(false);
   const [dragOver, setDragOver]             = useState(false);
-  // Each entry: { name, src, file, caption }
+  // Each entry: { name, src, file, caption, description, info }
   const [previewItems, setPreviewItems]     = useState([]);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadImages(); }, [activeSection]);
-
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     try {
       setLoading(true);
       const data = await imageManagerAPI.getImages(activeSection);
@@ -33,7 +44,20 @@ function ImageManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSection]);
+
+  // The effect synchronizes the selected admin section with the API.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadImages(); }, [loadImages]);
+
+  useEffect(() => {
+    eventsAPI.getAdmin().then(data => {
+      if (data.events?.length) {
+        const savedEvents = data.events.map(event => ({ id: event._id, title: event.title, ...event }));
+        setEventOptions(current => [...current, ...savedEvents.filter(event => !current.some(item => item.id === event.id))]);
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleFiles = (files) => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -47,7 +71,7 @@ function ImageManager() {
     const readers = valid.map(file =>
       new Promise(resolve => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve({ name: file.name, src: reader.result, file, caption: '' });
+        reader.onloadend = () => resolve({ name: file.name, src: reader.result, file, caption: '', description: '', info: '' });
         reader.readAsDataURL(file);
       })
     );
@@ -66,13 +90,23 @@ function ImageManager() {
     );
   };
 
+  const handleMetadataChange = (index, field, value) => {
+    setPreviewItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  };
+
   const handleUpload = async () => {
     if (previewItems.length === 0) return;
+    if (previewItems.some(item => !item.caption.trim() || !item.description.trim() || !item.info.trim())) {
+      alert('Add a title, description, and photo information for every image before uploading.');
+      return;
+    }
     try {
       setUploading(true);
       const files    = previewItems.map(p => p.file);
       const captions = previewItems.map(p => p.caption);
-      await imageManagerAPI.uploadImages(activeSection, files, captions);
+      const descriptions = previewItems.map(p => p.description);
+      const infos = previewItems.map(p => p.info);
+      await imageManagerAPI.uploadImages(activeSection, files, captions, descriptions, infos, selectedEventId);
       setPreviewItems([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
       await loadImages();
@@ -81,6 +115,23 @@ function ImageManager() {
       console.error(err);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCreateEvent = async (event) => {
+    event.preventDefault();
+    setCreatingEvent(true);
+    try {
+      const data = await eventsAPI.create(newEvent);
+      const created = { id: data.event._id, title: data.event.title, ...data.event };
+      setEventOptions(current => [created, ...current.filter(item => item.id !== created.id)]);
+      setSelectedEventId(created.id);
+      setNewEvent({ title: '', description: '', date: '', location: '' });
+      setShowEventForm(false);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Unable to create event album.');
+    } finally {
+      setCreatingEvent(false);
     }
   };
 
@@ -98,6 +149,10 @@ function ImageManager() {
     setPreviewItems([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  const displayedImages = activeSection === 'events'
+    ? images.filter(image => image.eventId === selectedEventId)
+    : images;
 
   return (
     <div style={s.root}>
@@ -117,6 +172,13 @@ function ImageManager() {
       </div>
 
       {/* Upload Drop Zone */}
+      {activeSection === 'events' && (
+        <div style={s.eventSelector}>
+          <div><p style={s.eventSelectorEyebrow}>EVENT ALBUM</p><h3 style={s.eventSelectorTitle}>Where should these photos appear?</h3><p style={s.eventSelectorHint}>Select an album or create a new event before uploading.</p></div>
+          <div style={s.eventSelectorActions}><select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} style={s.eventSelect}>{eventOptions.map(event => <option key={event.id} value={event.id}>{event.title}</option>)}</select><button type="button" style={s.newEventBtn} onClick={() => setShowEventForm(current => !current)}>+ New event</button></div>
+        </div>
+      )}
+      {activeSection === 'events' && showEventForm && <form style={s.eventForm} onSubmit={handleCreateEvent}><div><p style={s.eventSelectorEyebrow}>NEW ALBUM</p><h3 style={s.eventSelectorTitle}>Create an event</h3></div><div style={s.eventFormGrid}><input required placeholder="Event title" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} style={s.eventFormInput} /><input required placeholder="Date or year" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} style={s.eventFormInput} /><input required placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} style={s.eventFormInput} /><textarea required rows={3} placeholder="Event description" value={newEvent.description} onChange={e => setNewEvent({ ...newEvent, description: e.target.value })} style={s.eventFormInput} /></div><div style={s.eventFormActions}><button type="button" style={s.cancelBtn} onClick={() => setShowEventForm(false)}>Cancel</button><button type="submit" style={s.uploadBtn} disabled={creatingEvent}>{creatingEvent ? 'Creating...' : 'Create event album'}</button></div></form>}
       <div
         style={{ ...s.dropzone, ...(dragOver ? s.dropzoneActive : {}) }}
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
@@ -133,11 +195,11 @@ function ImageManager() {
           onChange={e => handleFiles(e.target.files)}
         />
         <div style={s.dropzoneIcon}>📁</div>
-        <p style={s.dropzoneTitle}>Drag & drop images here or click to browse</p>
+        <p style={s.dropzoneTitle}>{activeSection === 'events' ? 'Add photos to this event album' : 'Drag & drop images here or click to browse'}</p>
         <p style={s.dropzoneHint}>JPEG, PNG, WEBP · Max 5MB each · Multiple files allowed</p>
       </div>
 
-      {/* Preview + caption inputs */}
+      {/* Preview + required image metadata */}
       {previewItems.length > 0 && (
         <div style={s.previewSection}>
           <div style={s.previewHeader}>
@@ -162,14 +224,30 @@ function ImageManager() {
                 <img src={item.src} alt={item.name} style={s.previewImg} />
                 <div style={s.previewMeta}>
                   <p style={s.previewName} title={item.name}>{item.name}</p>
-                  <input
+                  <label style={s.fieldLabel}>Photo title <span>Required</span><input
                     type="text"
-                    placeholder="Add a description (optional)"
+                    placeholder="e.g. Boiler installation"
                     value={item.caption}
                     onChange={e => handleCaptionChange(i, e.target.value)}
                     style={s.captionInput}
                     onClick={e => e.stopPropagation()}
-                  />
+                  /></label>
+                  <label style={s.fieldLabel}>Description <span>Required</span><textarea
+                    placeholder="Describe what this photo shows"
+                    value={item.description}
+                    onChange={e => handleMetadataChange(i, 'description', e.target.value)}
+                    style={s.metadataInput}
+                    rows={2}
+                    onClick={e => e.stopPropagation()}
+                  /></label>
+                  <label style={s.fieldLabel}>Photo information <span>Required</span><textarea
+                    placeholder="Project, location, equipment, or useful context"
+                    value={item.info}
+                    onChange={e => handleMetadataChange(i, 'info', e.target.value)}
+                    style={s.metadataInput}
+                    rows={2}
+                    onClick={e => e.stopPropagation()}
+                  /></label>
                 </div>
               </div>
             ))}
@@ -180,22 +258,22 @@ function ImageManager() {
       {/* Divider */}
       <div style={s.divider}>
         <span style={s.dividerLabel}>
-          {SECTIONS.find(sec => sec.key === activeSection)?.label} — {images.length} image{images.length !== 1 ? 's' : ''} on website
+          {SECTIONS.find(sec => sec.key === activeSection)?.label}{activeSection === 'events' ? ` / ${eventOptions.find(event => event.id === selectedEventId)?.title}` : ''} — {displayedImages.length} image{displayedImages.length !== 1 ? 's' : ''} on website
         </span>
       </div>
 
       {/* Existing images */}
       {loading ? (
         <p style={s.loadingText}>Loading images...</p>
-      ) : images.length === 0 ? (
+      ) : displayedImages.length === 0 ? (
         <div style={s.emptyBox}>
           <p style={s.emptyText}>No images uploaded yet for this section.</p>
           <p style={s.emptyHint}>Upload images above — they will appear on the website automatically.</p>
         </div>
       ) : (
         <div style={s.imageGrid}>
-          {images.map(img => (
-            <div key={img._id} style={s.imageCard}>
+          {displayedImages.map(img => (
+            <div key={img._id} className="image-manager-card" style={s.imageCard}>
               <div style={s.imageWrap}>
                 <img
                   src={`${BASE_URL}${img.imageUrl}`}
@@ -204,9 +282,9 @@ function ImageManager() {
                 />
               </div>
               <div style={s.imageBody}>
-                {img.caption && (
-                  <p style={s.captionText}>{img.caption}</p>
-                )}
+                <p style={s.captionText}>{img.caption || 'Untitled image'}</p>
+                {img.description && <p style={s.descriptionText}>{img.description}</p>}
+                {img.info && <p style={s.infoText}>{img.info}</p>}
                 <div style={s.imageFooter}>
                   <span style={s.imageDate}>
                     {new Date(img.createdAt).toLocaleDateString()}
@@ -247,6 +325,21 @@ const s = {
   dropzoneIcon: { fontSize: '40px', marginBottom: '12px' },
   dropzoneTitle: { fontSize: '16px', fontWeight: '600', color: '#0f2d4d', margin: '0 0 6px 0' },
   dropzoneHint: { fontSize: '13px', color: '#70879b', margin: 0 },
+  eventSelector: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px',
+    padding: '18px 20px', marginBottom: '14px', border: '1px solid #cdd9e2',
+    borderRadius: '12px', background: 'linear-gradient(120deg, #f8fbfc, #eef5f7)'
+  },
+  eventSelectorEyebrow: { margin: '0 0 5px', color: '#d9732d', fontSize: '10px', fontWeight: '700', letterSpacing: '1.6px' },
+  eventSelectorTitle: { margin: 0, color: '#0f2d4d', font: "700 16px 'Sora', sans-serif" },
+  eventSelectorHint: { margin: '5px 0 0', color: '#70879b', fontSize: '12px' },
+  eventSelect: { minWidth: '250px', padding: '11px 13px', border: '1px solid #b9c8d4', borderRadius: '8px', background: '#fff', color: '#0f2d4d', font: "600 13px 'Barlow', sans-serif" },
+  eventSelectorActions: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' },
+  newEventBtn: { padding: '10px 13px', border: '1px solid #146c8a', borderRadius: '8px', background: '#fff', color: '#146c8a', font: "600 13px 'Barlow', sans-serif", cursor: 'pointer' },
+  eventForm: { padding: '18px 20px', marginBottom: '14px', border: '1px solid #cdd9e2', borderRadius: '12px', background: '#fff', boxShadow: '0 8px 22px rgba(15,45,77,.07)' },
+  eventFormGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '14px' },
+  eventFormInput: { width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #d5dee7', borderRadius: '7px', color: '#0f2d4d', background: '#f8fafc', font: "13px 'Barlow', sans-serif" },
+  eventFormActions: { display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px' },
 
   previewSection: {
     background: '#fff', border: '1px solid #d5dee7',
@@ -288,6 +381,14 @@ const s = {
     fontSize: '12px', fontFamily: "'Barlow', sans-serif",
     color: '#112235', outline: 'none', background: '#f8fafc'
   },
+  fieldLabel: { display: 'block', marginTop: '8px', color: '#455b70', fontSize: '11px', fontWeight: '600' },
+  fieldRequired: { color: '#d9732d' },
+  metadataInput: {
+    width: '100%', boxSizing: 'border-box', resize: 'vertical',
+    padding: '6px 8px', border: '1px solid #d5dee7', borderRadius: '6px',
+    fontSize: '12px', fontFamily: "'Barlow', sans-serif",
+    color: '#112235', outline: 'none', background: '#f8fafc', marginTop: '4px'
+  },
 
   divider: { borderTop: '2px solid #f2f5f8', marginBottom: '20px', paddingTop: '20px' },
   dividerLabel: { fontSize: '15px', fontWeight: '700', color: '#0f2d4d', fontFamily: "'Sora', sans-serif" },
@@ -301,19 +402,21 @@ const s = {
   emptyHint: { fontSize: '13px', color: '#70879b', margin: 0 },
 
   imageGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px'
+    display: 'grid', gridTemplateColumns: 'repeat(12, minmax(0, 1fr))', gap: '18px'
   },
   imageCard: {
-    background: '#fff', borderRadius: '10px', overflow: 'hidden',
-    border: '1px solid #d5dee7', boxShadow: '0 2px 8px rgba(15,45,77,0.06)'
+    gridColumn: 'span 4', background: '#fff', borderRadius: '14px', overflow: 'hidden',
+    border: '1px solid #d5dee7', boxShadow: '0 8px 24px rgba(15,45,77,0.08)'
   },
-  imageWrap: { width: '100%', height: '150px', overflow: 'hidden', background: '#f2f5f8' },
+  imageWrap: { width: '100%', aspectRatio: '1.45', overflow: 'hidden', background: '#f2f5f8' },
   image: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   imageBody: { padding: '10px 12px' },
   captionText: {
-    fontSize: '12px', color: '#455b70', margin: '0 0 8px 0',
-    lineHeight: '1.4', fontStyle: 'italic'
+    fontSize: '16px', color: '#0f2d4d', margin: '0 0 6px 0',
+    lineHeight: '1.3', fontWeight: '700', fontFamily: "'Sora', sans-serif"
   },
+  descriptionText: { fontSize: '13px', color: '#455b70', margin: '0 0 8px', lineHeight: '1.45' },
+  infoText: { fontSize: '12px', color: '#70879b', margin: '0 0 12px', lineHeight: '1.45', paddingTop: '9px', borderTop: '1px solid #edf1f4' },
   imageFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   imageDate: { fontSize: '11px', color: '#70879b' },
   deleteBtn: {

@@ -42,7 +42,7 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || 'http://localhost:8000';
+      const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || 'http://localhost:7000';
       const response = await fetch(`${CHATBOT_API_URL}/api/chat/chat`, {
         method: 'POST',
         headers: {

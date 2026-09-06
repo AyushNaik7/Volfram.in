@@ -70,8 +70,11 @@ const calculatorRoutes = require("./routes/calculator.routes");
 app.use("/api", enquiryRoutes);
 app.use("/api", require("./routes/register.routes.js"));
 app.use("/api", require("./routes/login.routes.js"));
+app.use("/api", require("./routes/user.routes.js"));
 app.use("/api/auth", authRoutes);           // JWT auth routes
 app.use("/api/admin", adminRoutes);          // Admin dashboard routes
+app.use("/api", require("./routes/requirement.routes.js"));
+app.use("/api", require("./routes/event.routes.js"));
 app.use("/api", chatbotRoutes);              // Chatbot AI routes at /api/chat
 app.use("/api", quotationRoutes);            // Quotation routes at /api/quotation
 app.use('/api/calculators', calculatorRoutes);

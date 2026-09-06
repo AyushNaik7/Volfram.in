@@ -9,6 +9,10 @@ import PagesList from '../components/admin/PagesList';
 import ImageManager from '../components/admin/ImageManager';
 
 import CalculatorsList from '../components/admin/CalculatorsList';
+import UsersList from '../components/admin/UsersList';
+import EnquiriesList from '../components/admin/EnquiriesList';
+import RequirementsList from '../components/admin/RequirementsList';
+import ChatbotLeadsList from '../components/admin/ChatbotLeadsList';
 
 import { getAccessToken } from '../services/api';
 
@@ -81,6 +85,18 @@ function AdminPage() {
             case 'calculators':
 
                 return <CalculatorsList />;
+
+            case 'users':
+                return <UsersList />;
+
+            case 'enquiries':
+                return <EnquiriesList />;
+
+            case 'requirements':
+                return <RequirementsList />;
+
+            case 'chatbot-leads':
+                return <ChatbotLeadsList />;
 
 
             case 'dashboard':

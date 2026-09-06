@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { fetchSectionImages } from '../services/api';
+import { fetchPublicEvents, fetchSectionImages } from '../services/api';
 
 const eventGallery = [
   "/Events/image.png",
@@ -7,72 +7,32 @@ const eventGallery = [
   ...Array.from({ length: 88 }, (_, index) => `/Events/image copy ${index + 2}.png`),
 ];
 
-const events = [
-  {
-    id: "annual-2025",
-    title: "Annual Conference 2025-26",
-    date: "5th April, 2025",
-    location: "Mumbai, India",
-    description:
-      "Volfram Annual Conference celebrated our technical growth, stronger partner collaborations, and customer-focused steam innovation milestones.",
-    images: eventGallery.slice(0, 18),
-  },
-  {
-    id: "boiler-india-2024",
-    title: "Boiler India 2024",
-    date: "Trade Exhibition",
-    location: "Mumbai, India",
-    description:
-      "Our team showcased process boiler automation, steam accessories, and smarter plant reliability strategies to industry leaders and EPC teams.",
-    images: eventGallery.slice(18, 36),
-  },
-  {
-    id: "chemtech-2024",
-    title: "Chemtech 2024",
-    date: "Industrial Expo",
-    location: "Mumbai, India",
-    description:
-      "At Chemtech, we demonstrated compact steam solutions and live controls for chemical process operations requiring high uptime and efficiency.",
-    images: eventGallery.slice(36, 54),
-  },
-  {
-    id: "annual-2024",
-    title: "Annual Conference 2024-25",
-    date: "6th April, 2024",
-    location: "Mumbai, India",
-    description:
-      "An internal strategy and celebration event focused on execution quality, engineering excellence, and customer-first service commitments.",
-    images: eventGallery.slice(54, 72),
-  },
-  {
-    id: "boiler-world",
-    title: "Boiler World Expo",
-    date: "Global Connect",
-    location: "Industry Pavilion",
-    description:
-      "A global networking platform where we engaged with boiler professionals to exchange ideas around performance, safety, and sustainability.",
-    images: eventGallery.slice(72, 90),
-  },
-];
-
 const toImageSrc = (path) => encodeURI(path);
 
 export default function Events() {
   const [dbEventImages, setDbEventImages] = useState([]);
+  const [customEvents, setCustomEvents] = useState([]);
 
   useEffect(() => {
     fetchSectionImages('events').then(imgs => {
       if (imgs.length > 0) {
         const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
-        setDbEventImages(imgs.map(img => `${API_URL}${img.imageUrl}`));
+        setDbEventImages(imgs.map(img => ({
+          eventId: img.eventId,
+          src: `${API_URL}${img.imageUrl}`,
+          title: img.caption,
+          description: img.description,
+          info: img.info
+        })));
       }
     }).catch(() => {});
   }, []);
 
-  // Use DB images if available, else hardcoded
-  const sourceGallery = dbEventImages.length > 0 ? dbEventImages : eventGallery;
+  useEffect(() => {
+    fetchPublicEvents().then(setCustomEvents).catch(() => {});
+  }, []);
 
-  // Rebuild events array with dynamic source
+  // Use DB images if available, else hardcoded
   const eventsWithImages = useMemo(() => [
     {
       id: "annual-2025",
@@ -81,7 +41,7 @@ export default function Events() {
       location: "Mumbai, India",
       description:
         "Volfram Annual Conference celebrated our technical growth, stronger partner collaborations, and customer-focused steam innovation milestones.",
-      images: sourceGallery.slice(0, 18),
+      images: eventGallery.slice(0, 18),
     },
     {
       id: "boiler-india-2024",
@@ -90,7 +50,7 @@ export default function Events() {
       location: "Mumbai, India",
       description:
         "Our team showcased process boiler automation, steam accessories, and smarter plant reliability strategies to industry leaders and EPC teams.",
-      images: sourceGallery.slice(18, 36),
+      images: eventGallery.slice(18, 36),
     },
     {
       id: "chemtech-2024",
@@ -99,7 +59,7 @@ export default function Events() {
       location: "Mumbai, India",
       description:
         "At Chemtech, we demonstrated compact steam solutions and live controls for chemical process operations requiring high uptime and efficiency.",
-      images: sourceGallery.slice(36, 54),
+      images: eventGallery.slice(36, 54),
     },
     {
       id: "annual-2024",
@@ -108,7 +68,7 @@ export default function Events() {
       location: "Mumbai, India",
       description:
         "An internal strategy and celebration event focused on execution quality, engineering excellence, and customer-first service commitments.",
-      images: sourceGallery.slice(54, 72),
+      images: eventGallery.slice(54, 72),
     },
     {
       id: "boiler-world",
@@ -117,9 +77,13 @@ export default function Events() {
       location: "Industry Pavilion",
       description:
         "A global networking platform where we engaged with boiler professionals to exchange ideas around performance, safety, and sustainability.",
-      images: sourceGallery.slice(72, 90),
+      images: eventGallery.slice(72, 90),
     },
-  ], [sourceGallery]);
+  ].concat(customEvents.map(event => ({ ...event, id: event._id, images: [] }))).map((event) => {
+    const uploadedImages = dbEventImages.filter(image => image.eventId === event.id);
+    if (uploadedImages.length > 0) return { ...event, images: uploadedImages };
+    return event.images.length > 0 ? event : { ...event, images: [eventGallery[0]] };
+  }), [customEvents, dbEventImages]);
 
   const initialSlides = useMemo(
     () => Object.fromEntries(eventsWithImages.map((event) => [event.id, 0])),
@@ -165,7 +129,7 @@ export default function Events() {
   };
 
   return (
-    <div className="page-shell">
+    <div className="page-shell events-page">
       <section className="hero-section py-20 md:py-24">
         <div className="container-custom relative z-10">
           <span className="badge-industrial mb-4">Events & Highlights</span>
@@ -173,30 +137,30 @@ export default function Events() {
             Exhibition & Conference Timeline
           </h1>
           <p className="mt-6 max-w-3xl text-lg text-slate-100">
-            Old-format inspired events feed with alternating sections and multi-image
-            sliders for every event showcase.
+            Explore the people, places and engineering moments behind Volfram Systems.
           </p>
         </div>
       </section>
 
-      <section className="bg-[#f1f3f6]">
+      <section className="events-feed">
         {eventsWithImages.map((event, eventIndex) => {
           const isAlternate = eventIndex % 2 === 1;
           const activeIndex = slides[event.id] ?? 0;
           const activeImage = event.images[activeIndex];
+          const activeImageSrc = typeof activeImage === 'string' ? activeImage : activeImage.src;
 
           return (
             <article
               key={event.id}
-              className="grid min-h-[360px] grid-cols-1 border-b border-slate-300/50 md:grid-cols-2"
+              className="event-row grid min-h-[360px] grid-cols-1 border-b border-slate-300/50 md:grid-cols-2"
             >
               <div
-                className={`relative overflow-hidden bg-slate-200 ${
+                className={`event-row__visual relative overflow-hidden bg-slate-200 ${
                   isAlternate ? "md:order-2" : ""
                 }`}
               >
                 <img
-                  src={toImageSrc(activeImage)}
+                  src={toImageSrc(activeImageSrc)}
                   alt={event.title}
                   className="h-full w-full object-cover"
                 />
@@ -241,7 +205,7 @@ export default function Events() {
                           aria-label={`Select image ${thumbIndex + 1} for ${event.title}`}
                         >
                           <img
-                            src={toImageSrc(image)}
+                            src={toImageSrc(typeof image === 'string' ? image : image.src)}
                             alt={`${event.title} thumbnail ${thumbIndex + 1}`}
                             className="h-full w-full object-cover"
                           />
@@ -262,11 +226,11 @@ export default function Events() {
               </div>
 
               <div
-                className={`flex items-center justify-center px-8 py-10 md:px-14 ${
+                className={`event-row__content flex items-center justify-center px-8 py-10 md:px-14 ${
                   isAlternate ? "md:order-1" : ""
                 }`}
               >
-                <div className="max-w-md text-center md:text-left">
+                <div className="event-row__details max-w-md text-center md:text-left">
                   <h4 className="text-3xl text-primary">{event.title}</h4>
                   <p className="mt-2 text-sm font-semibold uppercase tracking-[0.08em] text-secondary">
                     {event.location} | {event.date}
@@ -274,6 +238,9 @@ export default function Events() {
                   <p className="mt-5 leading-relaxed text-text-secondary">
                     {event.description}
                   </p>
+                  {typeof activeImage !== 'string' && activeImage.description && (
+                    <div className="event-photo-note mt-5"><strong>{activeImage.title}</strong><span>{activeImage.description}</span>{activeImage.info && <small>{activeImage.info}</small>}</div>
+                  )}
 
                   <button
                     type="button"
@@ -326,7 +293,7 @@ export default function Events() {
           </button>
 
           <img
-            src={toImageSrc(selectedImages[currentIndex])}
+            src={toImageSrc(typeof selectedImages[currentIndex] === 'string' ? selectedImages[currentIndex] : selectedImages[currentIndex].src)}
             alt="Selected event"
             className="max-h-[84vh] max-w-[92vw] rounded-lg object-contain"
           />

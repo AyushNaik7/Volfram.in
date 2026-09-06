@@ -1,29 +1,18 @@
-const supabase = require('../config/supabase');
+const saturatedSteamTable = require('../data/saturatedSteamTable');
 
 class CalculatorService {
   
   // Get steam properties from table based on pressure
   async getSteamProperties(pressure) {
-    const { data, error } = await supabase
-      .from('steam_tables')
-      .select('*')
-      .eq('gauge_pressure', pressure)
-      .single();
-
-    if (error || !data) {
-      // If exact match not found, interpolate
-      return this.interpolateSteamProperties(pressure);
-    }
-
-    return data;
+    const exact = saturatedSteamTable.find(row => row.pressure === Number(pressure));
+    return exact ? this.normalizeSteamProperties(exact) : this.interpolateSteamProperties(Number(pressure));
   }
 
   // Interpolate steam properties for pressures not in table
   async interpolateSteamProperties(pressure) {
-    const { data: steamData } = await supabase
-      .from('steam_tables')
-      .select('*')
-      .order('gauge_pressure', { ascending: true });
+    const steamData = saturatedSteamTable
+      .map(row => this.normalizeSteamProperties(row))
+      .sort((a, b) => a.gauge_pressure - b.gauge_pressure);
 
     // Find surrounding values
     let lower = null, upper = null;
@@ -51,6 +40,18 @@ class CalculatorService {
       sensible_heat: lower.sensible_heat + ratio * (upper.sensible_heat - lower.sensible_heat),
       latent_heat: lower.latent_heat + ratio * (upper.latent_heat - lower.latent_heat),
       total_heat: lower.total_heat + ratio * (upper.total_heat - lower.total_heat)
+    };
+  }
+
+  normalizeSteamProperties(row) {
+    return {
+      gauge_pressure: row.gauge_pressure ?? row.pressure,
+      boiling_point: row.boiling_point ?? row.temperature,
+      specific_volume: row.specific_volume ?? row.specificVolume,
+      density: row.density,
+      sensible_heat: row.sensible_heat ?? row.sensibleHeat,
+      latent_heat: row.latent_heat ?? row.latentHeat,
+      total_heat: row.total_heat ?? row.totalHeat
     };
   }
 

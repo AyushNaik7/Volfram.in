@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { authAPI, setAccessToken } from "../services/api";
+import { authAPI, setAccessToken, setUser } from "../services/api";
 
 function Login() {
   const [email, setEmail]       = useState('');
@@ -17,10 +17,11 @@ function Login() {
     try {
       const response = await authAPI.login(email, password);
       setAccessToken(response.accessToken);
+      setUser(response.user);
       if (response.user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');

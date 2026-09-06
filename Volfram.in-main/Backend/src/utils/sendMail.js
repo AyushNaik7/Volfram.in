@@ -1,12 +1,22 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (email, token) => {
+  const emailUser = process.env.EMAIL_USER?.trim();
+  const emailPass = process.env.EMAIL_PASS?.trim();
+
+  if (!emailUser || !emailPass) {
+    const error = new Error(
+      "Email verification is not configured. Set EMAIL_USER and EMAIL_PASS in Backend/.env. For Gmail, EMAIL_PASS must be an app password."
+    );
+    error.code = "EMAIL_NOT_CONFIGURED";
+    throw error;
+  }
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: emailUser,
+      pass: emailPass
     }
   });
 
@@ -14,7 +24,7 @@ const sendEmail = async (email, token) => {
   const verifyLink = `${API_URL}/api/verify/${token}`;
 
   await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: emailUser,
     to: email,
     subject: "Verify your email",
     html: `

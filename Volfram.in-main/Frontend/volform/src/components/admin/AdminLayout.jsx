@@ -48,6 +48,10 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
             <span style={styles.navIcon}>📄</span>
             Pages
           </button>
+          <button style={{ ...styles.navItem, ...(activeSection === 'users' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('users')}><span style={styles.navIcon}>👥</span>Registered Candidates</button>
+          <button style={{ ...styles.navItem, ...(activeSection === 'enquiries' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('enquiries')}><span style={styles.navIcon}>✉️</span>User Enquiries</button>
+          <button style={{ ...styles.navItem, ...(activeSection === 'requirements' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('requirements')}><span style={styles.navIcon}>📋</span>Requirements</button>
+          <button style={{ ...styles.navItem, ...(activeSection === 'chatbot-leads' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('chatbot-leads')}><span style={styles.navIcon}>🤖</span>Chatbot Enquiries</button>
           
           <button
             style={{

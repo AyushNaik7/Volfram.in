@@ -23,6 +23,7 @@
   import Login from './pages/Login.jsx'
   import Register from './pages/Register.jsx'
   import AdminPage from './pages/AdminPage.jsx'
+  import UserDashboard from './pages/UserDashboard.jsx'
   import PageDetail from './pages/PageDetail.jsx'
   import SafetyValveOrificeCalculator
     from './pages/SafetyValveOrificeCalculator.jsx';
@@ -109,6 +110,8 @@ import LiquidPipeCalculator
           path="/admin"
           element={<AdminPage />}
         />
+
+        <Route path="/dashboard" element={<UserDashboard />} />
 
 
         {/* Saturated Steam Pipe Calculator — standalone unique page */}

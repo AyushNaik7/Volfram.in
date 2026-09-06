@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 // Environment variable for chatbot API URL
-const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:8000";
+const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:7000";
 
 // ─── SUGGESTED QUESTIONS ─────────────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
@@ -158,7 +158,19 @@ const FLOW = {
     next: "confirm",
   },
 
-  confirm: { id: "confirm", type: "confirm", next: "done" },
+  confirm: { id: "confirm", type: "confirm", next: "customer_name" },
+  customer_name: {
+    id: "customer_name", message: "Before we send this for quotation, what is your full name?",
+    type: "text", placeholder: "Your full name", param: "customerName", next: "customer_email",
+  },
+  customer_email: {
+    id: "customer_email", message: "What email address should our team use to contact you?",
+    type: "email", placeholder: "you@example.com", param: "customerEmail", next: "customer_phone",
+  },
+  customer_phone: {
+    id: "customer_phone", message: "What mobile number can our team reach you on?",
+    type: "tel", placeholder: "+91 9876543210", param: "customerPhone", next: "done",
+  },
   done: { id: "done", type: "end" },
 };
 
@@ -169,6 +181,7 @@ function buildSummary(params) {
     inletTemp: "Inlet Temp", outletTemp: "Outlet Temp", outletTempType: "Outlet Temp Type",
     waterTemp: "Water Injection Temp", moc: "MOC", fuelType: "Fuel Type",
     efficiency: "Efficiency", faRating: "F&A Rating", temp: "Temperature", velocity: "Velocity",
+    customerName: "Customer Name", customerEmail: "Email", customerPhone: "Mobile Number",
   };
   return Object.entries(params)
     .map(([k, v]) => `• ${labels[k] || k}: ${v}`)
@@ -192,6 +205,7 @@ export default function ChatWidget() {
   const [currentStep, setCurrentStep] = useState("start");
   const [params, setParams] = useState({});
   const [numberInput, setNumberInput] = useState("");
+  const [textInput, setTextInput] = useState("");
   const [customVelocity, setCustomVelocity] = useState("");
   const [showCustomVelocity, setShowCustomVelocity] = useState(false);
   const [quoteDone, setQuoteDone] = useState(false);
@@ -264,12 +278,26 @@ export default function ChatWidget() {
     advance(`${numberInput} ${step.unit}`);
   };
 
+  const handleTextSubmit = () => {
+    if (!textInput.trim()) return;
+    const step = FLOW[currentStep];
+    if (step.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(textInput.trim())) return;
+    advance(textInput.trim());
+    setTextInput('');
+  };
+
   const sendToBackend = async (finalParams) => {
     try {
-      await axios.post(`${CHATBOT_API_URL}/api/chat/chat`, {
+      await axios.post(`${CHATBOT_API_URL}/api/chat/lead`, {
         message: `Customer confirmed quotation parameters:\n${buildSummary(finalParams)}`,
         session_id: sessionId,
-        customer_email: null,
+        customerInfo: {
+          name: finalParams.customerName,
+          email: finalParams.customerEmail,
+          phone: finalParams.customerPhone,
+        },
+        quoteDetails: finalParams,
+        quoteSubmitted: true,
       });
     } catch (e) {
       console.error("Backend error:", e);
@@ -284,6 +312,7 @@ export default function ChatWidget() {
     setParams({});
     setQuoteDone(false);
     setNumberInput("");
+    setTextInput("");
   };
 
   // ── RENDER QUOTE STEP INPUT ───────────────────────────────────────────────
@@ -314,6 +343,23 @@ export default function ChatWidget() {
           />
           <span style={styles.unitBadge}>{step.unit}</span>
           <button style={styles.sendBtn} onClick={handleNumberSubmit}>Next →</button>
+        </div>
+      );
+    }
+
+    if (step.type === "text" || step.type === "email" || step.type === "tel") {
+      return (
+        <div style={styles.numberRow}>
+          <input
+            style={styles.numberInput}
+            type={step.type}
+            value={textInput}
+            placeholder={step.placeholder}
+            onChange={(e) => setTextInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleTextSubmit()}
+            autoFocus
+          />
+          <button style={styles.sendBtn} onClick={handleTextSubmit}>Next →</button>
         </div>
       );
     }

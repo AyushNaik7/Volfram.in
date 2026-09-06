@@ -1,0 +1,12 @@
+import { useEffect, useState } from 'react';
+import { enquiriesAPI } from '../../services/api';
+
+function EnquiriesList() {
+  const [enquiries, setEnquiries] = useState([]);
+  const [state, setState] = useState({ loading: true, error: '' });
+  useEffect(() => { enquiriesAPI.getAll().then((data) => setEnquiries(data.enquiries || [])).catch((error) => setState({ loading: false, error: error.response?.data?.message || 'Unable to load enquiries.' })).finally(() => setState((current) => ({ ...current, loading: false }))); }, []);
+  if (state.loading) return <div className="admin-empty-state">Loading enquiries...</div>;
+  if (state.error) return <div className="admin-empty-state admin-empty-state--error">{state.error}</div>;
+  return <section className="enquiry-page"><header className="admin-data-header"><div><p className="admin-data-header__eyebrow">INBOX / CUSTOMER CONTACT</p><h2>User enquiries</h2><p>Every enquiry submitted through the public contact form.</p></div><div className="admin-data-header__total"><strong>{enquiries.length}</strong><span>Open enquiries</span></div></header><div className="admin-data-summary"><div><span>Total enquiries</span><strong>{enquiries.length}</strong></div><div><span>Latest submission</span><strong>{enquiries[0] ? new Date(enquiries[0].createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</strong></div><div><span>Response queue</span><strong>{enquiries.length ? 'Active' : 'Clear'}</strong></div></div>{enquiries.length === 0 ? <div className="admin-empty-state"><span>✉</span><h3>No enquiries yet</h3><p>New messages from the contact form will appear here.</p></div> : <div className="enquiry-list">{enquiries.map((item, index) => <article className="enquiry-card" key={item._id}><div className="enquiry-card__rail"><span>{String(index + 1).padStart(2, '0')}</span><time>{new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</time></div><div className="enquiry-card__body"><div className="enquiry-card__heading"><div><p className="enquiry-card__subject">{item.subject}</p><h3>{item.fullname}</h3></div><span className="enquiry-card__tag">New enquiry</span></div><div className="enquiry-card__meta"><span>{item.email}</span><span>{item.phone}</span><span>{item.companyName}</span></div><p className="enquiry-card__message">{item.message}</p></div></article>)}</div>}</section>;
+}
+export default EnquiriesList;

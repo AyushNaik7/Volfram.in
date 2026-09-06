@@ -8,11 +8,26 @@ const SiteImageSchema = new mongoose.Schema({
     enum: ['gallery', 'events', 'clients', 'about', 'products'],
     index: true
   },
+  eventId: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   imageUrl: {
     type: String,
     required: true
   },
   caption: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  description: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  info: {
     type: String,
     trim: true,
     default: ''
