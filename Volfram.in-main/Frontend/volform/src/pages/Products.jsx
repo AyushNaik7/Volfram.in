@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { fetchSectionImages } from "../services/api";
 
 const categories = [
   {
@@ -24,6 +26,16 @@ const categories = [
 ];
 
 export default function Products() {
+  const [productImages, setProductImages] = useState([]);
+
+  useEffect(() => {
+    fetchSectionImages('products')
+      .then(setProductImages)
+      .catch(error => console.error('Failed to load product images:', error));
+  }, []);
+
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+
   return (
     <div className="page-shell">
       <section className="hero-section py-20 md:py-24">
@@ -35,6 +47,22 @@ export default function Products() {
           </p>
         </div>
       </section>
+
+      {productImages.length > 0 && (
+        <section className="section-white">
+          <div className="container-custom">
+            <h2 className="text-3xl text-primary">Product highlights</h2>
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {productImages.map(image => (
+                <figure key={image._id} className="overflow-hidden rounded-md border border-slate-200 bg-white">
+                  <img src={`${API_URL}${image.imageUrl}`} alt={image.caption || 'Product'} className="h-56 w-full object-cover" />
+                  {image.caption && <figcaption className="p-3 text-sm font-semibold text-primary">{image.caption}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="section-light">
         <div className="container-custom grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -6,6 +6,11 @@ const fs = require('fs');
 const Page = require('../models/Page');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const ChatbotLead = require('../models/ChatbotLead.models.js');
+const Register = require('../models/register.models.js');
+const Enquiry = require('../models/Enquiry.models.js');
+const Requirement = require('../models/Requirement.models.js');
+const Event = require('../models/Event.models.js');
+const SiteImage = require('../models/SiteImage');
 
 router.get('/chatbot-leads', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -13,6 +18,30 @@ router.get('/chatbot-leads', authMiddleware, adminMiddleware, async (req, res) =
     res.json({ leads });
   } catch (error) {
     res.status(500).json({ message: 'Failed to load chatbot enquiries.', error: error.message });
+  }
+});
+
+router.get('/dashboard', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const [users, products, events, enquiries, requirements, chatbotLeads, recentUsers, recentEvents, recentEnquiries] = await Promise.all([
+      Register.countDocuments(),
+      SiteImage.countDocuments({ section: 'products' }),
+      Event.countDocuments(),
+      Enquiry.countDocuments(),
+      Requirement.countDocuments(),
+      ChatbotLead.countDocuments(),
+      Register.find().select('name email role isVerified createdAt').sort({ createdAt: -1 }).limit(5).lean(),
+      Event.find().select('title date location createdAt').sort({ createdAt: -1 }).limit(5).lean(),
+      Enquiry.find().select('fullname email subject createdAt').sort({ createdAt: -1 }).limit(5).lean()
+    ]);
+
+    res.json({
+      stats: { users, products, events, enquiries, requirements, chatbotLeads },
+      recent: { users: recentUsers, events: recentEvents, enquiries: recentEnquiries }
+    });
+  } catch (error) {
+    console.error('Error loading dashboard:', error);
+    res.status(500).json({ message: 'Failed to load dashboard.', error: error.message });
   }
 });
 
@@ -237,8 +266,6 @@ router.delete('/pages/:id', authMiddleware, adminMiddleware, async (req, res) =>
 
 // ─── IMAGE MANAGER ROUTES ────────────────────────────────────────────────────
 
-const SiteImage = require('../models/SiteImage');
-
 // Configure multer for multiple image upload (reuse existing storage + fileFilter)
 const uploadMultiple = multer({
   storage: storage,
@@ -314,6 +341,33 @@ router.post('/images/:section', authMiddleware, adminMiddleware, uploadMultiple.
     res.status(201).json({ message: `${savedImages.length} image(s) uploaded.`, images: savedImages });
   } catch (error) {
     res.status(500).json({ message: 'Error uploading images.', error: error.message });
+  }
+});
+
+router.put('/images/:id', authMiddleware, adminMiddleware, upload.single('photo'), async (req, res) => {
+  try {
+    const image = await SiteImage.findById(req.params.id);
+    if (!image) return res.status(404).json({ message: 'Image not found.' });
+
+    image.caption = req.body.caption?.trim() || image.caption;
+    image.description = req.body.description?.trim() || image.description;
+    image.info = req.body.info?.trim() || image.info;
+
+    if (req.file) {
+      const oldPath = path.join(__dirname, '../../', image.imageUrl);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      image.imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    await image.save();
+    res.json({ message: 'Image updated.', image });
+  } catch (error) {
+    if (req.file) {
+      const filePath = path.join(uploadsDir, req.file.filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    console.error('Error updating image:', error);
+    res.status(500).json({ message: 'Error updating image.', error: error.message });
   }
 });
 

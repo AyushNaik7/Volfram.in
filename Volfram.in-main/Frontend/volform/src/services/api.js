@@ -135,43 +135,6 @@ export const authAPI = {
 };
 
 /**
- * Admin Pages API
- */
-export const pagesAPI = {
-  // Get all pages
-  getAll: async () => {
-    const response = await api.get('/admin/pages');
-    return response.data;
-  },
-
-  // Create new page
-  create: async (formData) => {
-    const response = await api.post('/admin/pages', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
-  },
-
-  // Update page
-  update: async (id, formData) => {
-    const response = await api.put(`/admin/pages/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
-  },
-
-  // Delete page
-  delete: async (id) => {
-    const response = await api.delete(`/admin/pages/${id}`);
-    return response.data;
-  }
-};
-
-/**
  * Image Manager API (Admin)
  */
 export const imageManagerAPI = {
@@ -190,6 +153,18 @@ export const imageManagerAPI = {
     descriptions.forEach((description) => formData.append('descriptions', description));
     infos.forEach((info) => formData.append('infos', info));
     const response = await api.post(`/admin/images/${section}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  updateImage: async (id, { file, caption, description, info }) => {
+    const formData = new FormData();
+    if (file) formData.append('photo', file);
+    formData.append('caption', caption);
+    formData.append('description', description);
+    formData.append('info', info);
+    const response = await api.put(`/admin/images/${id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
@@ -219,7 +194,12 @@ export const requirementsAPI = {
 
 export const eventsAPI = {
   getAdmin: async () => (await api.get('/admin/events')).data,
-  create: async (payload) => (await api.post('/admin/events', payload)).data
+  create: async (payload) => (await api.post('/admin/events', payload)).data,
+  delete: async (id) => (await api.delete(`/admin/events/${id}`)).data
+};
+
+export const dashboardAPI = {
+  getSummary: async () => (await api.get('/admin/dashboard')).data
 };
 
 export const chatbotLeadsAPI = {
@@ -242,16 +222,6 @@ export const fetchSectionImages = async (section) => {
   const response = await fetch(`${API_URL}/api/public-images/${section}`);
   const data = await response.json();
   return data.images || [];
-};
-
-/**
- * Public pages fetch (no auth) — used by header dropdown
- */
-export const fetchPublicPages = async () => {
-  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
-  const response = await fetch(`${API_URL}/api/public-pages`);
-  const data = await response.json();
-  return data.pages || [];
 };
 
 export default api;

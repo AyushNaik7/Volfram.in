@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 import AdminLayout from '../components/admin/AdminLayout';
 
-import PagesList from '../components/admin/PagesList';
-
 import ImageManager from '../components/admin/ImageManager';
 
 import CalculatorsList from '../components/admin/CalculatorsList';
@@ -13,6 +11,7 @@ import UsersList from '../components/admin/UsersList';
 import EnquiriesList from '../components/admin/EnquiriesList';
 import RequirementsList from '../components/admin/RequirementsList';
 import ChatbotLeadsList from '../components/admin/ChatbotLeadsList';
+import DashboardOverview from '../components/admin/DashboardOverview';
 
 import { getAccessToken } from '../services/api';
 
@@ -25,7 +24,7 @@ import { getAccessToken } from '../services/api';
 function AdminPage() {
 
     const [activeSection, setActiveSection] =
-        useState('pages');
+        useState('dashboard');
 
     const navigate = useNavigate();
 
@@ -70,11 +69,6 @@ function AdminPage() {
 
         switch (activeSection) {
 
-            case 'pages':
-
-                return <PagesList />;
-
-
             case 'images':
 
                 return <ImageManager />;
@@ -100,37 +94,11 @@ function AdminPage() {
 
 
             case 'dashboard':
-
-                return (
-
-                    <div style={styles.placeholder}>
-
-                        <h2
-                            style={{
-                                fontFamily: "'Sora', sans-serif",
-                                color: '#0f2d4d',
-                                marginBottom: '8px'
-                            }}
-                        >
-                            Dashboard Overview
-                        </h2>
-
-                        <p
-                            style={{
-                                color: '#455b70',
-                                fontFamily: "'Barlow', sans-serif"
-                            }}
-                        >
-                            Statistics and analytics will be shown here.
-                        </p>
-
-                    </div>
-                );
+                return <DashboardOverview />;
 
 
             default:
-
-                return <PagesList />;
+                return <DashboardOverview />;
         }
     };
 
@@ -147,24 +115,4 @@ function AdminPage() {
         </AdminLayout>
     );
 }
-
-
-const styles = {
-
-    placeholder: {
-
-        background: '#fff',
-
-        padding: '40px',
-
-        borderRadius: '12px',
-
-        textAlign: 'center',
-
-        border: '1px solid #d5dee7'
-    }
-
-};
-
-
 export default AdminPage;

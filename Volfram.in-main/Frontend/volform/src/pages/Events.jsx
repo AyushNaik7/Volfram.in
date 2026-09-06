@@ -33,7 +33,7 @@ export default function Events() {
   }, []);
 
   // Use DB images if available, else hardcoded
-  const eventsWithImages = useMemo(() => [
+  const builtInEvents = useMemo(() => [
     {
       id: "annual-2025",
       title: "Annual Conference 2025-26",
@@ -79,11 +79,19 @@ export default function Events() {
         "A global networking platform where we engaged with boiler professionals to exchange ideas around performance, safety, and sustainability.",
       images: eventGallery.slice(72, 90),
     },
-  ].concat(customEvents.map(event => ({ ...event, id: event._id, images: [] }))).map((event) => {
+  ], []);
+
+  const eventsWithImages = useMemo(() => builtInEvents.concat(
+    customEvents
+      .filter(event => event?._id && event?.title)
+      .filter((event, index, events) => index === events.findIndex(item => item._id === event._id || item.title.trim().toLowerCase() === event.title.trim().toLowerCase()))
+      .filter(event => !builtInEvents.some(item => item.title.trim().toLowerCase() === event.title.trim().toLowerCase()))
+      .map(event => ({ ...event, id: event._id, images: [] }))
+  ).map((event) => {
     const uploadedImages = dbEventImages.filter(image => image.eventId === event.id);
     if (uploadedImages.length > 0) return { ...event, images: uploadedImages };
     return event.images.length > 0 ? event : { ...event, images: [eventGallery[0]] };
-  }), [customEvents, dbEventImages]);
+  }), [builtInEvents, customEvents, dbEventImages]);
 
   const initialSlides = useMemo(
     () => Object.fromEntries(eventsWithImages.map((event) => [event.id, 0])),
@@ -152,7 +160,7 @@ export default function Events() {
           return (
             <article
               key={event.id}
-              className="event-row grid min-h-[360px] grid-cols-1 border-b border-slate-300/50 md:grid-cols-2"
+              className="event-row grid min-h-90 grid-cols-1 border-b border-slate-300/50 md:grid-cols-2"
             >
               <div
                 className={`event-row__visual relative overflow-hidden bg-slate-200 ${
@@ -165,7 +173,7 @@ export default function Events() {
                   className="h-full w-full object-cover"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/5 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/30 via-black/5 to-transparent" />
 
                 <div className="absolute left-6 top-6 md:left-10 md:top-10">
                   <h3 className="text-3xl font-semibold uppercase tracking-[0.08em] text-white/22 md:text-5xl">

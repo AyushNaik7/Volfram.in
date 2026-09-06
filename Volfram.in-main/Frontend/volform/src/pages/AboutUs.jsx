@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { fetchSectionImages } from '../services/api';
 
 const topCards = [
   {
@@ -62,6 +64,19 @@ function TextPanel({ title, points, tone = "dark" }) {
 }
 
 export default function AboutUs() {
+  const [managedImages, setManagedImages] = useState([]);
+
+  useEffect(() => {
+    fetchSectionImages('about')
+      .then(images => setManagedImages(images.map(image => ({
+        src: `${import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000'}${image.imageUrl}`,
+        alt: image.caption || 'Volfram about us'
+      }))))
+      .catch(error => console.error('Failed to load About Us images:', error));
+  }, []);
+
+  const aboutImage = (index, fallback, fallbackAlt) => managedImages[index] || { src: fallback, alt: fallbackAlt };
+
   return (
     <div className="page-shell">
       <section className="bg-primary py-18 text-white md:py-22">
@@ -90,7 +105,7 @@ export default function AboutUs() {
       </section>
 
       <section className="section-white py-0">
-        <img src={"/AboutUs/image.png"} alt="Volfram team" className="h-[800px] w-full object-cover" />
+        <img {...aboutImage(0, '/AboutUs/image.png', 'Volfram team')} className="h-[800px] w-full object-cover" />
       </section>
 
       <section className="section-white py-14">
@@ -107,13 +122,13 @@ export default function AboutUs() {
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <TextPanel title="Our Purpose" points={purposePoints} tone="dark" />
-          <img src={"/AboutUs/imagecopy.png"} alt="Volfram presentation" className="h-[800px] w-full object-cover" />
+          <img {...aboutImage(1, '/AboutUs/imagecopy.png', 'Volfram presentation')} className="h-[800px] w-full object-cover" />
         </div>
       </section>
 
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
-          <img src={"/AboutUs/imagecopy2.png"} alt="Volfram commitment" className="h-[800px] w-full object-cover md:order-1" />
+          <img {...aboutImage(2, '/AboutUs/imagecopy2.png', 'Volfram commitment')} className="h-[800px] w-full object-cover md:order-1" />
           <div className="md:order-2">
             <TextPanel title="Our Commitment" points={commitmentPoints} tone="light" />
           </div>
@@ -123,7 +138,7 @@ export default function AboutUs() {
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <TextPanel title="Our Passion" points={passionPoints} tone="dark" />
-          <img src={"/AboutUs/imagecopy3.png"} alt="Volfram annual meet" className="h-[800px] w-full object-cover" />
+          <img {...aboutImage(3, '/AboutUs/imagecopy3.png', 'Volfram annual meet')} className="h-[800px] w-full object-cover" />
         </div>
       </section>
     </div>

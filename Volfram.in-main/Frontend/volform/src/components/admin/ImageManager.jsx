@@ -25,6 +25,7 @@ function ImageManager() {
   const [selectedEventId, setSelectedEventId] = useState(DEFAULT_EVENT_OPTIONS[0].id);
   const [showEventForm, setShowEventForm] = useState(false);
   const [creatingEvent, setCreatingEvent] = useState(false);
+  const [deletingEvent, setDeletingEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '', location: '' });
   const [images, setImages]                 = useState([]);
   const [loading, setLoading]               = useState(false);
@@ -135,6 +136,44 @@ function ImageManager() {
     }
   };
 
+  const handleDeleteEvent = async () => {
+    const selectedEvent = eventOptions.find(event => event.id === selectedEventId);
+    if (!selectedEvent || DEFAULT_EVENT_OPTIONS.some(event => event.id === selectedEventId)) return;
+    if (!window.confirm(`Delete "${selectedEvent.title}" and all of its uploaded images?`)) return;
+
+    try {
+      setDeletingEvent(true);
+      await eventsAPI.delete(selectedEventId);
+      const nextEvents = eventOptions.filter(event => event.id !== selectedEventId);
+      setEventOptions(nextEvents);
+      setSelectedEventId(nextEvents[0]?.id || DEFAULT_EVENT_OPTIONS[0].id);
+      await loadImages();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Unable to delete event.');
+    } finally {
+      setDeletingEvent(false);
+    }
+  };
+
+  const handleEdit = async (image) => {
+    const caption = window.prompt('Photo title', image.caption || '');
+    if (caption === null) return;
+    const description = window.prompt('Description', image.description || '');
+    if (description === null) return;
+    const info = window.prompt('Photo information', image.info || '');
+    if (info === null) return;
+    if (!caption.trim() || !description.trim() || !info.trim()) {
+      alert('Title, description, and photo information are required.');
+      return;
+    }
+    try {
+      await imageManagerAPI.updateImage(image._id, { caption, description, info });
+      await loadImages();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Update failed.');
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this image from the website?')) return;
     try {
@@ -175,7 +214,7 @@ function ImageManager() {
       {activeSection === 'events' && (
         <div style={s.eventSelector}>
           <div><p style={s.eventSelectorEyebrow}>EVENT ALBUM</p><h3 style={s.eventSelectorTitle}>Where should these photos appear?</h3><p style={s.eventSelectorHint}>Select an album or create a new event before uploading.</p></div>
-          <div style={s.eventSelectorActions}><select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} style={s.eventSelect}>{eventOptions.map(event => <option key={event.id} value={event.id}>{event.title}</option>)}</select><button type="button" style={s.newEventBtn} onClick={() => setShowEventForm(current => !current)}>+ New event</button></div>
+          <div style={s.eventSelectorActions}><select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)} style={s.eventSelect}>{eventOptions.map(event => <option key={event.id} value={event.id}>{event.title}</option>)}</select>{!DEFAULT_EVENT_OPTIONS.some(event => event.id === selectedEventId) && <button type="button" style={s.deleteEventBtn} onClick={handleDeleteEvent} disabled={deletingEvent}>{deletingEvent ? 'Deleting...' : 'Delete event'}</button>}<button type="button" style={s.newEventBtn} onClick={() => setShowEventForm(current => !current)}>+ New event</button></div>
         </div>
       )}
       {activeSection === 'events' && showEventForm && <form style={s.eventForm} onSubmit={handleCreateEvent}><div><p style={s.eventSelectorEyebrow}>NEW ALBUM</p><h3 style={s.eventSelectorTitle}>Create an event</h3></div><div style={s.eventFormGrid}><input required placeholder="Event title" value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} style={s.eventFormInput} /><input required placeholder="Date or year" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} style={s.eventFormInput} /><input required placeholder="Location" value={newEvent.location} onChange={e => setNewEvent({ ...newEvent, location: e.target.value })} style={s.eventFormInput} /><textarea required rows={3} placeholder="Event description" value={newEvent.description} onChange={e => setNewEvent({ ...newEvent, description: e.target.value })} style={s.eventFormInput} /></div><div style={s.eventFormActions}><button type="button" style={s.cancelBtn} onClick={() => setShowEventForm(false)}>Cancel</button><button type="submit" style={s.uploadBtn} disabled={creatingEvent}>{creatingEvent ? 'Creating...' : 'Create event album'}</button></div></form>}
@@ -291,6 +330,9 @@ function ImageManager() {
                   </span>
                   <button style={s.deleteBtn} onClick={() => handleDelete(img._id)}>
                     Delete
+                  </button>
+                  <button style={s.editBtn} onClick={() => handleEdit(img)}>
+                    Edit
                   </button>
                 </div>
               </div>
@@ -423,6 +465,15 @@ const s = {
     padding: '4px 12px', background: '#fee2e2', color: '#c0392b',
     border: '1px solid #fca5a5', borderRadius: '6px', fontSize: '12px',
     fontWeight: '600', cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+  },
+  editBtn: {
+    padding: '4px 12px', background: '#e8f2f5', color: '#146c8a',
+    border: '1px solid #b9d4dc', borderRadius: '6px', fontSize: '12px',
+    fontWeight: '600', cursor: 'pointer', fontFamily: "'Barlow', sans-serif"
+  },
+  deleteEventBtn: {
+    padding: '10px 13px', border: '1px solid #fca5a5', borderRadius: '8px',
+    background: '#fff5f5', color: '#c0392b', font: "600 13px 'Barlow', sans-serif", cursor: 'pointer'
   }
 };
 

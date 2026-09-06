@@ -38,16 +38,6 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
         </div>
 
         <nav style={styles.nav}>
-          <button
-            style={{
-              ...styles.navItem,
-              ...(activeSection === 'pages' ? styles.navItemActive : {})
-            }}
-            onClick={() => onSectionChange('pages')}
-          >
-            <span style={styles.navIcon}>📄</span>
-            Pages
-          </button>
           <button style={{ ...styles.navItem, ...(activeSection === 'users' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('users')}><span style={styles.navIcon}>👥</span>Registered Candidates</button>
           <button style={{ ...styles.navItem, ...(activeSection === 'enquiries' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('enquiries')}><span style={styles.navIcon}>✉️</span>User Enquiries</button>
           <button style={{ ...styles.navItem, ...(activeSection === 'requirements' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('requirements')}><span style={styles.navIcon}>📋</span>Requirements</button>
