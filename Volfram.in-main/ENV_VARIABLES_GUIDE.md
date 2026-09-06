@@ -31,9 +31,10 @@ PORT=5000
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_KEY=your-supabase-anon-key
 
-# Email (for notifications)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-email-app-password
+# Brevo Email (for verification and notifications)
+BREVO_API_KEY=your-brevo-api-key
+BREVO_SENDER_EMAIL=your-verified-sender@example.com
+BREVO_SENDER_NAME=Volfram.in
 ```
 
 ---
@@ -144,18 +145,17 @@ SUPABASE_URL=https://abcdefghijklmnop.supabase.co
 SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### 6. EMAIL_USER & EMAIL_PASS (Optional)
+### 6. Brevo Email Variables (Optional)
 
-**For Gmail:**
-1. Enable 2-factor authentication on your Google account
-2. Go to: https://myaccount.google.com/apppasswords
-3. Create app password for "Mail"
-4. Use this 16-character password (not your regular password)
+1. Create or sign in to your account at https://app.brevo.com
+2. Open **SMTP & API** → **API Keys** and create a v3 API key.
+3. Verify the sender address under **Senders & IP**.
+4. Add the API key, verified sender email, and sender name to the backend environment:
 
-**Example:**
 ```
-EMAIL_USER=yourcompany@gmail.com
-EMAIL_PASS=abcd efgh ijkl mnop
+BREVO_API_KEY=your-brevo-api-key
+BREVO_SENDER_EMAIL=your-verified-sender@example.com
+BREVO_SENDER_NAME=Volfram.in
 ```
 
 ---
@@ -342,8 +342,9 @@ PORT=5000
 # Optional
 SUPABASE_URL=
 SUPABASE_KEY=
-EMAIL_USER=
-EMAIL_PASS=
+BREVO_API_KEY=
+BREVO_SENDER_EMAIL=
+BREVO_SENDER_NAME=Volfram.in
 ```
 
 ### For Frontend (.env):

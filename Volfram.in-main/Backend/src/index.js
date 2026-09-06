@@ -7,8 +7,8 @@ require("dotenv").config({
     path: path.resolve(__dirname, "../.env"),
 });
 console.log("ENV path:", path.resolve(__dirname, "../.env"));
-console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+console.log("BREVO_API_KEY exists:", !!process.env.BREVO_API_KEY);
+console.log("BREVO_SENDER_EMAIL exists:", !!process.env.BREVO_SENDER_EMAIL);
 
 
 const connectDB = require("./db/index.js"); // ✅ FIXED
