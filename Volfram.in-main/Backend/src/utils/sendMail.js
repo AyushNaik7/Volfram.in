@@ -1,39 +1,73 @@
 const nodemailer = require("nodemailer");
 
-const sendEmail = async (email, token) => {
-  const emailUser = process.env.EMAIL_USER?.trim();
-  const emailPass = process.env.EMAIL_PASS?.trim();
+const sendEmail = async (email, token, otp) => {
+    console.log(`[MAIL] sendEmail reached, pid=${process.pid}, recipient=${email}`);
 
-  if (!emailUser || !emailPass) {
-    const error = new Error(
-      "Email verification is not configured. Set EMAIL_USER and EMAIL_PASS in Backend/.env. For Gmail, EMAIL_PASS must be an app password."
-    );
-    error.code = "EMAIL_NOT_CONFIGURED";
-    throw error;
-  }
+    const emailUser = process.env.EMAIL_USER?.trim();
+    const emailPass = process.env.EMAIL_PASS?.trim();
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: emailUser,
-      pass: emailPass
+    if (!emailUser || !emailPass) {
+        console.error("EMAIL CONFIGURATION FAILED!");
+
+        const error = new Error(
+            "Email verification is not configured. Set EMAIL_USER and EMAIL_PASS in Backend/.env."
+        );
+
+        error.code = "EMAIL_NOT_CONFIGURED";
+
+        throw error;
     }
-  });
 
-  const API_URL = process.env.BACKEND_URL || 'http://localhost:7000';
-  const verifyLink = `${API_URL}/api/verify/${token}`;
+    try {
 
-  await transporter.sendMail({
-    from: emailUser,
-    to: email,
-    subject: "Verify your email",
-    html: `
-    <h1>Welcome to Volfram.in!</h1>
-      <h2>Email Verification</h2>
-      <p>Click below to verify:</p>
-      <a href="${verifyLink}">Verify Email</a>
-    `
-  });
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: emailUser,
+                pass: emailPass,
+            },
+        });
+
+        // Test Gmail connection
+        await transporter.verify();
+
+        console.log("Gmail connection verified successfully!");
+
+        await transporter.sendMail({
+            from: `"Volfram.in" <${emailUser}>`,
+            to: email,
+            subject: "Your Volfram Email Verification OTP",
+
+            html: `
+                <div style="font-family: Arial, sans-serif;">
+                    <h2>Welcome to Volfram.in!</h2>
+
+                    <p>Your email verification OTP is:</p>
+
+                    <h1 style="font-size: 32px; letter-spacing: 8px;">
+                        ${otp}
+                    </h1>
+
+                    <p>
+                        This OTP expires in 10 minutes.
+                    </p>
+
+                    <p>
+                        Do not share this OTP with anyone.
+                    </p>
+                </div>
+            `,
+        });
+
+        console.log("Email sent successfully to:", email);
+
+    } catch (error) {
+
+        console.error("NODEMAILER ERROR:");
+        console.error(error);
+
+        throw error;
+    }
 };
 
 module.exports = sendEmail;

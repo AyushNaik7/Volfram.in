@@ -34,6 +34,12 @@ const registerSchema = new mongoose.Schema({
   default: false
 },
 verificationToken: String,
+    verificationOtpHash: String,
+    verificationOtpExpiresAt: Date,
+    verificationOtpAttempts: {
+        type: Number,
+        default: 0
+    },
 }, { timestamps: true });
 
 const Register = mongoose.model("Register", registerSchema);

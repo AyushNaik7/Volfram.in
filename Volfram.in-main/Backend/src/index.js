@@ -2,7 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
-require("dotenv").config();
+
+require("dotenv").config({
+    path: path.resolve(__dirname, "../.env"),
+});
+console.log("ENV path:", path.resolve(__dirname, "../.env"));
+console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
+console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+
 
 const connectDB = require("./db/index.js"); // ✅ FIXED
 
@@ -51,11 +58,20 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies
 
+app.use((req, res, next) => {
+  console.log(`[REQUEST] pid=${process.pid} ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
+});
+app.post("/test-register", (req, res) => {
+    console.log("🔥 TEST ROUTE RECEIVED REQUEST");
+    res.json({ message: "Test successful" });
 });
 
 // Import routes

@@ -13,7 +13,8 @@ function Register() {
   const [focused, setFocused]   = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [agreed, setAgreed]     = useState(false);
-  const [step, setStep]         = useState(1); // 1 = form, 2 = success
+  const [step, setStep]         = useState(1); // 1 = form, 2 = OTP, 3 = success
+  const [otp, setOtp]           = useState('');
 
   const handleChange = field => e =>
     setFormData({ ...formData, [field]: e.target.value });
@@ -45,6 +46,50 @@ function Register() {
     } catch (err) {
       console.error('Registration failed:', err);
       alert('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+      const response = await fetch(`${API_URL}/api/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, otp }),
+      });
+      const data = await response.json();
+      if (!response.ok) alert(data.message || 'Invalid OTP. Please try again.');
+      else setStep(3);
+    } catch (err) {
+      console.error('OTP verification failed:', err);
+      alert('Unable to verify OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    setIsLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+      const response = await fetch(`${API_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          number: formData.phone,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          role: formData.role,
+        }),
+      });
+      const data = await response.json();
+      alert(response.ok ? 'A new OTP was sent to your email.' : (data.message || 'Unable to resend OTP.'));
     } finally {
       setIsLoading(false);
     }
@@ -289,7 +334,7 @@ function Register() {
               <span className="vr-logo-name">Volfram<span className="vr-logo-dot" /></span>
             </div>
 
-            {step === 2 ? (
+            {step === 3 ? (
               /* ── Success screen ── */
               <div className="vr-success">
                 <div className="vr-success-icon">
@@ -297,15 +342,37 @@ function Register() {
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
-                <h2>Account created!</h2>
+                <h2>Account verified!</h2>
                 <p>
-                  Check your email to verify your address,<br />
-                  then sign in to get started.
+                  Your email has been verified successfully.<br />
+                  You can now sign in to get started.
                 </p>
                 <Link to="/login" className="vr-success-btn">
                   <span className="vr-success-accent" />
                   Go to Login →
                 </Link>
+              </div>
+            ) : step === 2 ? (
+              <div className="vr-success">
+                <div className="vr-success-icon"><span style={{ color: '#fff', fontSize: 28 }}>✉</span></div>
+                <h2>Verify your email</h2>
+                <p>We sent a 6-digit OTP to<br /><strong>{formData.email}</strong><br />The code expires in 10 minutes.</p>
+                <form onSubmit={handleVerifyOtp}>
+                  <input
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    maxLength={6}
+                    required
+                    style={{ width: '100%', padding: '14px', border: '1.5px solid #d5dee7', borderRadius: 10, textAlign: 'center', letterSpacing: 8, fontSize: 24, color: '#0f2d4d' }}
+                  />
+                  <button type="submit" className="vr-btn" disabled={isLoading || otp.length !== 6} style={{ marginTop: 16 }}>
+                    <span className="vr-btn-accent" />{isLoading ? <span className="vr-spinner" /> : 'Verify OTP'}
+                  </button>
+                </form>
+                <button type="button" onClick={resendOtp} disabled={isLoading} style={{ marginTop: 16, border: 0, background: 'transparent', color: '#d9732d', fontWeight: 600, cursor: 'pointer' }}>Resend OTP</button>
               </div>
             ) : (
               /* ── Registration form ── */
