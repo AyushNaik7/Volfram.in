@@ -4,8 +4,7 @@ const OpenAI = require('openai');
 const apiKey = process.env.OPENAI_API_KEY;
 
 if (!apiKey) {
-    console.error('❌ OPENAI_API_KEY is not set. Set your OpenRouter API key.');
-    process.exit(1);
+    console.warn('⚠️ OPENAI_API_KEY is not set. AI chat replies are disabled, but MongoDB chatbot leads remain available.');
 }
 
 // Default model - OpenRouter auto-router picks best available free model
@@ -13,17 +12,19 @@ if (!apiKey) {
 const model = process.env.LLM_MODEL || 'openrouter/auto';
 
 // Initialize OpenAI client pointing to OpenRouter
-const openai = new OpenAI({
-    apiKey: apiKey,
+const openai = apiKey ? new OpenAI({
+    apiKey,
     baseURL: 'https://openrouter.ai/api/v1',
     defaultHeaders: {
         'HTTP-Referer': process.env.FRONTEND_URL || 'https://volfram-ashen.vercel.app',
         'X-Title': 'Volfram Systems Chatbot'
     }
-});
+}) : null;
 
-console.log('🤖 LLM Provider: OpenRouter');
-console.log(`📦 Model: ${model}`);
+if (openai) {
+    console.log('🤖 LLM Provider: OpenRouter');
+    console.log(`📦 Model: ${model}`);
+}
 
 module.exports = {
     openai,

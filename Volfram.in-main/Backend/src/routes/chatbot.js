@@ -159,6 +159,14 @@ router.post('/chat/chat', optionalAuthMiddleware, async (req, res) => {
             });
         }
 
+        if (!openai) {
+            return res.status(503).json({
+                success: false,
+                error: 'chatbot_not_configured',
+                message: 'AI chat is not configured. Your authenticated enquiry can still be submitted.'
+            });
+        }
+
         if (conversationId && !mongoose.isValidObjectId(conversationId)) {
             return res.status(400).json({
                 success: false,
