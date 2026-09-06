@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { getAccessToken } from '../../services/api';
+import { getAccessToken, getUser } from '../../services/api';
 
 // Environment variable for chatbot API URL
 const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:7000";
@@ -163,7 +163,7 @@ const FLOW = {
     next: "confirm",
   },
 
-  confirm: { id: "confirm", type: "confirm", next: "customer_name" },
+  confirm: { id: "confirm", type: "confirm", next: () => getAccessToken() ? "done" : "customer_name" },
   customer_name: {
     id: "customer_name", message: "Before we send this for quotation, what is your full name?",
     type: "text", placeholder: "Your full name", param: "customerName", next: "customer_email",
@@ -293,17 +293,18 @@ export default function ChatWidget() {
 
   const sendToBackend = async (finalParams) => {
     try {
-      await axios.post(`${CHATBOT_API_URL}/api/chat/lead`, {
+      const response = await axios.post(`${CHATBOT_API_URL}/api/chat/lead`, {
         message: `Customer confirmed quotation parameters:\n${buildSummary(finalParams)}`,
         session_id: sessionId,
         customerInfo: {
-          name: finalParams.customerName,
-          email: finalParams.customerEmail,
-          phone: finalParams.customerPhone,
+          name: finalParams.customerName || getUser()?.name,
+          email: finalParams.customerEmail || getUser()?.email,
+          phone: finalParams.customerPhone || getUser()?.number,
         },
         quoteDetails: finalParams,
         quoteSubmitted: true,
       }, authConfig());
+      window.dispatchEvent(new CustomEvent('chatbot-lead-submitted', { detail: response.data.lead }));
     } catch (e) {
       console.error("Backend error:", e);
     }

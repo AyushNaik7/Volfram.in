@@ -21,6 +21,11 @@ function UserDashboard() {
       })
       .catch((error) => setState((current) => ({ ...current, error: error.response?.data?.message || 'Unable to load your requirements.' })))
       .finally(() => setState((current) => ({ ...current, loading: false })));
+    const handleLeadSubmitted = (event) => {
+      if (event.detail) setChatbotLeads((current) => [event.detail, ...current.filter((lead) => lead._id !== event.detail._id)]);
+    };
+    window.addEventListener('chatbot-lead-submitted', handleLeadSubmitted);
+    return () => window.removeEventListener('chatbot-lead-submitted', handleLeadSubmitted);
   }, [navigate]);
 
   const handleSubmit = async (event) => {
