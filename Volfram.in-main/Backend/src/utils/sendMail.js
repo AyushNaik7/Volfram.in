@@ -21,7 +21,10 @@ const sendEmail = async (email, token, otp) => {
     try {
 
         const transporter = nodemailer.createTransport({
-            service: "gmail",
+             host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    family: 4, // Force IPv4
             auth: {
                 user: emailUser,
                 pass: emailPass,
