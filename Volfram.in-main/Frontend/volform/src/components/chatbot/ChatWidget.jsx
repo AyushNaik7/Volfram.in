@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { getAccessToken } from '../../services/api';
 
 // Environment variable for chatbot API URL
 const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:7000";
+const authConfig = () => {
+  const token = getAccessToken();
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+};
 
 // ─── SUGGESTED QUESTIONS ─────────────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
@@ -228,7 +233,7 @@ export default function ChatWidget() {
       const res = await axios.post(`${CHATBOT_API_URL}/api/chat/chat`, {
         message: userMsg,
         session_id: sessionId,
-      });
+      }, authConfig());
       const reply = res.data.reply || res.data.response;
       setChatMessages((prev) => [...prev, { role: "bot", content: reply }]);
     } catch (error) {
@@ -298,7 +303,7 @@ export default function ChatWidget() {
         },
         quoteDetails: finalParams,
         quoteSubmitted: true,
-      });
+      }, authConfig());
     } catch (e) {
       console.error("Backend error:", e);
     }
@@ -521,7 +526,7 @@ export default function ChatWidget() {
                         axios.post(`${CHATBOT_API_URL}/api/chat/chat`, {
                           message: userMsg,
                           session_id: sessionId,
-                        }).then((res) => {
+                        }, authConfig()).then((res) => {
                           setChatMessages((prev) => [...prev, { role: "bot", content: res.data.reply }]);
                         }).catch(() => {
                           setChatMessages((prev) => [...prev, { role: "bot", content: "❌ Something went wrong. Please email steam@volfram.in directly." }]);

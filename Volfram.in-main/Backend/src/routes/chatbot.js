@@ -3,6 +3,7 @@ const router = express.Router();
 const { openai, model } = require('../config/openai');
 const mongoose = require('mongoose');
 const ChatbotLead = require('../models/ChatbotLead.models.js');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth');
 
 // System prompt with Volfram product knowledge
 const SYSTEM_PROMPT = `You are a helpful quotation assistant for Volfram Systems India Pvt. Ltd., a boiler and steam system company.
@@ -98,7 +99,7 @@ function handleChatError(error) {
     return 'Sorry, something went wrong. Please email steam@volfram.in for assistance.';
 }
 
-router.post('/chat/lead', async (req, res) => {
+router.post('/chat/lead', authMiddleware, async (req, res) => {
     try {
         const { session_id: sessionId, customerInfo, quoteDetails, message } = req.body;
         if (!sessionId || !customerInfo?.name || !customerInfo?.email || !customerInfo?.phone) {
@@ -109,6 +110,7 @@ router.post('/chat/lead', async (req, res) => {
             { sessionId },
             {
                 $set: {
+                    user: req.user.userId,
                     customerName: customerInfo.name.trim(),
                     customerEmail: customerInfo.email.trim().toLowerCase(),
                     customerPhone: customerInfo.phone.trim(),
@@ -127,8 +129,17 @@ router.post('/chat/lead', async (req, res) => {
     }
 });
 
+router.get('/chat/my-leads', authMiddleware, async (req, res) => {
+    try {
+        const leads = await ChatbotLead.find({ user: req.user.userId }).sort({ updatedAt: -1 });
+        res.json({ leads });
+    } catch (error) {
+        res.status(500).json({ message: 'Unable to load your chatbot requests.', error: error.message });
+    }
+});
+
 // POST /api/chat/chat - Handle chat messages
-router.post('/chat/chat', async (req, res) => {
+router.post('/chat/chat', optionalAuthMiddleware, async (req, res) => {
     try {
         const { message, conversationId, session_id: sessionId, customerInfo, quoteDetails, quoteSubmitted } = req.body;
 
@@ -164,6 +175,7 @@ router.post('/chat/chat', async (req, res) => {
         if (!conversation) {
             conversation = new ChatbotLead({
                 sessionId: sessionId || new mongoose.Types.ObjectId().toString(),
+                user: req.user?.userId || null,
                 customerName: customerInfo?.name || '',
                 customerEmail: customerInfo?.email || '',
                 customerPhone: customerInfo?.phone || ''
@@ -171,6 +183,7 @@ router.post('/chat/chat', async (req, res) => {
         }
 
         if (customerInfo) {
+            if (req.user?.userId) conversation.user = req.user.userId;
             conversation.customerName = customerInfo.name || conversation.customerName;
             conversation.customerEmail = customerInfo.email || conversation.customerEmail;
             conversation.customerPhone = customerInfo.phone || conversation.customerPhone;

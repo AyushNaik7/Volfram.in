@@ -223,7 +223,8 @@ export const eventsAPI = {
 };
 
 export const chatbotLeadsAPI = {
-  getAll: async () => (await api.get('/admin/chatbot-leads')).data
+  getAll: async () => (await api.get('/admin/chatbot-leads')).data,
+  getMine: async () => (await api.get('/chat/my-leads')).data
 };
 
 export const fetchPublicEvents = async () => {

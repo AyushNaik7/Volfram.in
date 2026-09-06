@@ -66,4 +66,15 @@ const adminMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = { authMiddleware, adminMiddleware };
+const optionalAuthMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return next();
+  try {
+    req.user = jwt.verify(authHeader.substring(7), process.env.JWT_SECRET);
+  } catch {
+    req.user = null;
+  }
+  next();
+};
+
+module.exports = { authMiddleware, adminMiddleware, optionalAuthMiddleware };

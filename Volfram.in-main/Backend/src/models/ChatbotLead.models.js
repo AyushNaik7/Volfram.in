@@ -8,6 +8,7 @@ const chatbotMessageSchema = new mongoose.Schema({
 
 const chatbotLeadSchema = new mongoose.Schema({
   sessionId: { type: String, required: true, unique: true, index: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'Register', default: null, index: true },
   customerName: { type: String, trim: true, default: '' },
   customerEmail: { type: String, trim: true, lowercase: true, default: '' },
   customerPhone: { type: String, trim: true, default: '' },
