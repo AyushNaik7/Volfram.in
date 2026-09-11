@@ -1,29 +1,37 @@
 const express=require("express");
 const router =express.Router();
+const saturatedSteamTable = require("../data/saturatedSteamTable");
 
 
 const {
-    calculateSteamPipeDiameter,
+  calculateSteamPipeDiameter,
   calculateSteamPipeCapacity,
   calculateSafetyValveOrifice,
-  calculateCondensateFlashSteamSaving,calculateBoilerDirectEfficiency,
+  calculateCondensateFlashSteamSaving,
+  calculateBoilerDirectEfficiency,
   calculateBlowDownSaving,
   calculateSteamRequirementForProcessHeating,
   calculateAirCoolingLoad,
-   calculateLiquidPipeDiameter,
+  calculateLiquidPipeDiameter,
   calculateLiquidPipeCapacity,
-   calculateSteamRequiredForEvaporation,
-   calculateFeedWaterTankTemperature,
-   calculateTankDimensionsAndWeight,
-   calculateHeatingCoolingSystem,
-   calculateWeight,
-   calculatePRSSteamSaving,
-   calculateSuperheatedSteamPipeSize
-
-}=require("../controllers/calculator.controllers");
+  calculateSteamRequiredForEvaporation,
+  calculateFeedWaterTankTemperature,
+  calculateTankDimensionsAndWeight,
+  calculateHeatingCoolingSystem,
+  calculateWeight,
+  calculatePRSSteamSaving,
+  calculateSuperheatedSteamPipeSize,
+  calculateFAboilerCapacity,
+  calculatePRDS,
+  calculateGeneralPipeWallThickness,
+  calculatePipeWallThickness,
+} = require("../controllers/calculator.controllers");
 
 router.post( "/saturated-steam-pipe/diameter",calculateSteamPipeDiameter);
 router.post("/saturated-steam-pipe/capacity",calculateSteamPipeCapacity);
+router.get("/saturated-steam-table", (req, res) => {
+  res.json({ success: true, data: saturatedSteamTable });
+});
 router.post("/safety-valve/orifice",calculateSafetyValveOrifice);
 router.post("/condensate-flash-steam-saving",calculateCondensateFlashSteamSaving);
 router.post(
@@ -79,5 +87,21 @@ router.post(
 router.post(
   "/superheated-steam-pipe/size",
   calculateSuperheatedSteamPipeSize
-); 
+);
+router.post(
+  "/pipe-wall-thickness",
+  calculatePipeWallThickness
+);
+router.post(
+  "/fa-boiler-capacity",
+  calculateFAboilerCapacity
+);
+router.post(
+  "/prds",
+  calculatePRDS
+);
+router.post(
+  "/general-pipe-wall-thickness",
+  calculateGeneralPipeWallThickness
+);
 module.exports=router;

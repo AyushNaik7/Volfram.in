@@ -59,6 +59,12 @@ import LiquidPipeCalculator
   from "./pages/SuperheatedSteamPipeCalculator.jsx";
   import PipeWallThicknessCalculator
   from "./pages/PipeWallThicknessCalculator.jsx";
+  import FABoilerCapacityCalculator
+  from "./pages/FABoilerCapacityCalculator.jsx";
+  import PRDSCalculator
+  from "./pages/PRDSCalculator.jsx";
+  import SaturatedSteamTable
+  from "./pages/SaturatedSteamTable.jsx";
 
   const router = createBrowserRouter(
 
@@ -179,6 +185,18 @@ import LiquidPipeCalculator
   path="/admin/calculators/pipe-wall-thickness"
   element={<PipeWallThicknessCalculator />}
 />
+<Route
+  path="/admin/calculators/fa-boiler-capacity"
+  element={<FABoilerCapacityCalculator />}
+/>
+<Route
+  path="/admin/calculators/prds"
+  element={<PRDSCalculator />}
+/> 
+<Route
+  path="/admin/calculators/saturated-steam-table"
+  element={<SaturatedSteamTable />}
+/> 
       </>
 
     )

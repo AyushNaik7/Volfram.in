@@ -33,7 +33,7 @@ function SteamRequiredEvaporationCalculator() {
     setLoading(true);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await axios.post(
         `${API_BASE_URL}/api/calculators/steam-required-evaporation`,
         {
@@ -150,6 +150,7 @@ function SteamRequiredEvaporationCalculator() {
                 onChange={handleChange}
                 style={styles.input}
                 placeholder="Example: 2"
+                step="any"
                 required
               />
             </div>
@@ -202,6 +203,7 @@ function SteamRequiredEvaporationCalculator() {
                 onChange={handleChange}
                 style={styles.input}
                 placeholder="Example: 4"
+                step="any"
                 required
               />
             </div>

@@ -40,7 +40,7 @@ function BlowDownSavingCalculator() {
     setResult(null);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await fetch(
         `${API_BASE_URL}/api/calculators/blow-down-saving`,
         {
@@ -50,7 +50,11 @@ function BlowDownSavingCalculator() {
             "Content-Type": "application/json",
           },
 
-          body: JSON.stringify(formData),
+          body: JSON.stringify(
+            Object.fromEntries(
+              Object.entries(formData).map(([k, v]) => [k, Number(v)])
+            )
+          ),
         }
       );
 
@@ -449,6 +453,7 @@ function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        step="any"
         style={styles.input}
       />
     </div>

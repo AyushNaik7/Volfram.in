@@ -45,7 +45,7 @@ function CondensateFlashSteamCalculator() {
 
     try {
 
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await fetch(
         `${API_BASE_URL}/api/calculators/condensate-flash-steam-saving`,
         {
@@ -320,6 +320,7 @@ function CondensateFlashSteamCalculator() {
                   name="flashSteamPressure"
                   value={formData.flashSteamPressure}
                   onChange={handleChange}
+                  step="any"
                   style={styles.input}
                   placeholder="Example: 1"
                 />

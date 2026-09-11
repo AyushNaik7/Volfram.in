@@ -5,42 +5,7 @@ class CalculatorService {
   // Get steam properties from table based on pressure
   async getSteamProperties(pressure) {
     const exact = saturatedSteamTable.find(row => row.pressure === Number(pressure));
-    return exact ? this.normalizeSteamProperties(exact) : this.interpolateSteamProperties(Number(pressure));
-  }
-
-  // Interpolate steam properties for pressures not in table
-  async interpolateSteamProperties(pressure) {
-    const steamData = saturatedSteamTable
-      .map(row => this.normalizeSteamProperties(row))
-      .sort((a, b) => a.gauge_pressure - b.gauge_pressure);
-
-    // Find surrounding values
-    let lower = null, upper = null;
-    
-    for (let i = 0; i < steamData.length; i++) {
-      if (steamData[i].gauge_pressure <= pressure) {
-        lower = steamData[i];
-      }
-      if (steamData[i].gauge_pressure >= pressure && !upper) {
-        upper = steamData[i];
-        break;
-      }
-    }
-
-    if (!lower || !upper) return lower || upper;
-
-    // Linear interpolation
-    const ratio = (pressure - lower.gauge_pressure) / (upper.gauge_pressure - lower.gauge_pressure);
-    
-    return {
-      gauge_pressure: pressure,
-      boiling_point: lower.boiling_point + ratio * (upper.boiling_point - lower.boiling_point),
-      specific_volume: lower.specific_volume + ratio * (upper.specific_volume - lower.specific_volume),
-      density: lower.density + ratio * (upper.density - lower.density),
-      sensible_heat: lower.sensible_heat + ratio * (upper.sensible_heat - lower.sensible_heat),
-      latent_heat: lower.latent_heat + ratio * (upper.latent_heat - lower.latent_heat),
-      total_heat: lower.total_heat + ratio * (upper.total_heat - lower.total_heat)
-    };
+    return exact ? this.normalizeSteamProperties(exact) : null;
   }
 
   normalizeSteamProperties(row) {

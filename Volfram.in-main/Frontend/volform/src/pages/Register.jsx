@@ -24,7 +24,7 @@ function Register() {
     if (formData.password !== formData.confirmPassword) return;
     setIsLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +55,7 @@ function Register() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/api/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +75,7 @@ function Register() {
   const resendOtp = async () => {
     setIsLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+      const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -574,3 +574,4 @@ function Register() {
 }
 
 export default Register;
+

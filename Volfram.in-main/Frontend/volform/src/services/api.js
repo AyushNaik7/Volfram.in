@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
 
 // Create axios instance
 const api = axios.create({
@@ -208,7 +208,7 @@ export const chatbotLeadsAPI = {
 };
 
 export const fetchPublicEvents = async () => {
-  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
   const response = await fetch(`${API_URL}/api/public-events`);
   const data = await response.json();
   return data.events || [];
@@ -218,10 +218,11 @@ export const fetchPublicEvents = async () => {
  * Public image fetch (no auth) — used by website pages
  */
 export const fetchSectionImages = async (section) => {
-  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
   const response = await fetch(`${API_URL}/api/public-images/${section}`);
   const data = await response.json();
   return data.images || [];
 };
 
 export default api;
+

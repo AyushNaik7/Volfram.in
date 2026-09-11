@@ -14,12 +14,14 @@ console.log("BREVO_SENDER_EMAIL exists:", !!process.env.BREVO_SENDER_EMAIL);
 const connectDB = require("./db/index.js"); // ✅ FIXED
 
 connectDB()
-  .then(() => {
-    console.log("Connected to MongoDB");
+  .then((connected) => {
+    if (connected) {
+      console.log("Connected to MongoDB");
+    }
   })
   .catch((error) => {
-    console.error("Failed to connect to MongoDB:", error);
-    process.exit(1);
+    console.warn("MongoDB connection check failed; app will continue without database.");
+    console.warn(error.message);
   });
 
 const app = express();

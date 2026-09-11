@@ -34,7 +34,7 @@ export default function Products() {
       .catch(error => console.error('Failed to load product images:', error));
   }, []);
 
-  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+  const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
 
   return (
     <div className="page-shell">
@@ -103,3 +103,4 @@ export default function Products() {
     </div>
   );
 }
+

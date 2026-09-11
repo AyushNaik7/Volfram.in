@@ -117,6 +117,24 @@ function CalculatorsList() {
   description:
     "Calculate required pipe wall thickness according to ASME B31.3 and verify whether the selected schedule is safe.",
   path: "/admin/calculators/pipe-wall-thickness"
+},
+{
+  id: 17,
+  name: "F&A Boiler Capacity Calculator",
+  description: "Calculate net steam delivery from the From-and-At boiler rating.",
+  path: "/admin/calculators/fa-boiler-capacity"
+},
+{
+  id: 18,
+  name: "PRDS / De-superheating Station Calculator",
+  description: "Calculate PRDS steam properties, water injection, and line sizes.",
+  path: "/admin/calculators/prds"
+},
+{
+  id: 19,
+  name: "Saturated Steam Table",
+  description: "Browse the complete Excel-backed saturated steam reference table.",
+  path: "/admin/calculators/saturated-steam-table"
 }
     
     ];

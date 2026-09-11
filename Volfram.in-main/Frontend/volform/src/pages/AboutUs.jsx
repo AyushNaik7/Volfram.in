@@ -69,7 +69,7 @@ export default function AboutUs() {
   useEffect(() => {
     fetchSectionImages('about')
       .then(images => setManagedImages(images.map(image => ({
-        src: `${import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000'}${image.imageUrl}`,
+        src: `${import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000'}${image.imageUrl}`,
         alt: image.caption || 'Volfram about us'
       }))))
       .catch(error => console.error('Failed to load About Us images:', error));
@@ -144,3 +144,4 @@ export default function AboutUs() {
     </div>
   );
 }
+

@@ -32,7 +32,7 @@ function FeedWaterTankTemperatureCalculator() {
     setResult(null);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await fetch(
         `${API_BASE_URL}/api/calculators/feed-water-tank/final-temperature`,
         {
@@ -187,6 +187,7 @@ function FeedWaterTankTemperatureCalculator() {
                   placeholder="Example: 50"
                   required
                   min="0"
+                  step="any"
                   style={styles.input}
                 />
               </div>
@@ -202,7 +203,7 @@ function FeedWaterTankTemperatureCalculator() {
                   placeholder="Example: 3"
                   required
                   min="0"
-                  step="1"
+                  step="any"
                   style={styles.input}
                 />
               </div>

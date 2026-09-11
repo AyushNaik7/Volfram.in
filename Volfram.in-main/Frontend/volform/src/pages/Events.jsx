@@ -16,7 +16,7 @@ export default function Events() {
   useEffect(() => {
     fetchSectionImages('events').then(imgs => {
       if (imgs.length > 0) {
-        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
         setDbEventImages(imgs.map(img => ({
           eventId: img.eventId,
           src: `${API_URL}${img.imageUrl}`,
@@ -319,3 +319,4 @@ export default function Events() {
     </div>
   );
 }
+

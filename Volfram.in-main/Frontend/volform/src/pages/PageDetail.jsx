@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+const API_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
 
 export default function PageDetail() {
   const { id } = useParams();
@@ -99,3 +99,4 @@ export default function PageDetail() {
     </div>
   );
 }
+

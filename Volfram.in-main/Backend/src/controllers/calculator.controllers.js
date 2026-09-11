@@ -4,6 +4,7 @@ const {
   pipeSchedules,
   materialData,
 } = require("../data/p11p22PipeData");
+const { getGeneralPipeData } = require("../data/generalPipeData");
 const getAllowableStress = (stressTable, temperature) => {
   const temperatures = Object.keys(stressTable)
     .map(Number)
@@ -35,9 +36,47 @@ const getAllowableStress = (stressTable, temperature) => {
 };
 const saturatedSteamTable = require("../data/saturatedSteamTable");
 const findSteamData = (pressure) => {
+  const requestedPressure = Number(pressure);
+
+  if (!Number.isFinite(requestedPressure)) return null;
+
   return saturatedSteamTable.find(
-    (item) => item.pressure === Number(pressure)
-  );
+    (item) => item.pressure === requestedPressure
+  ) || null;
+};
+
+const finiteNumbers = (...values) =>
+  values.every((value) => Number.isFinite(Number(value)));
+
+const calculateSuperheatedProperties = (pressure, temperature) => {
+  const absoluteTemperature = temperature + 273.14;
+  const reducedTemperature = absoluteTemperature / 647.14;
+  // Excel Sheet3 uses (P+1)/220.64 for PRDS reduced pressure
+  const reducedPressure = (pressure + 1) / 220.64;
+  const correction =
+    (0.3411 * reducedPressure) / Math.pow(reducedTemperature, 4.111);
+  const compressibilityFactor = 1 - correction / (1 - correction);
+  const enthalpyKjKg =
+    1892 +
+    (4.52 * compressibilityFactor * 8.314 * absoluteTemperature) / 18;
+  const density =
+    ((pressure + 1) * 100 * 18) /
+    (compressibilityFactor * 8.314 * absoluteTemperature);
+
+  if (!finiteNumbers(absoluteTemperature, reducedTemperature, reducedPressure, compressibilityFactor, enthalpyKjKg, density) || density <= 0) {
+    return null;
+  }
+
+  return {
+    absoluteTemperature,
+    reducedTemperature,
+    reducedPressure,
+    compressibilityFactor,
+    enthalpyKjKg,
+    enthalpyKcalKg: enthalpyKjKg / 4.184,
+    density,
+    specificVolume: 1 / density,
+  };
 };
 
 const calculateSteamPipeDiameter = async (req, res) => {
@@ -66,6 +105,7 @@ const calculateSteamPipeDiameter = async (req, res) => {
     const steamVelocity = Number(velocity);
 
     if (
+      !finiteNumbers(flowRate, pressure, steamVelocity) ||
       flowRate <= 0 ||
       pressure < 0 ||
       steamVelocity <= 0
@@ -99,9 +139,10 @@ const calculateSteamPipeDiameter = async (req, res) => {
       volumetricFlowPerHour / 3600;
 
     // Step 3: Calculate Pipe Diameter in meters
+    // Excel: SQRT((Q*4)/(3.14*v))
     const pipeDiameterMeter = Math.sqrt(
       (volumetricFlowPerSecond * 4) /
-      (Math.PI * steamVelocity)
+      (3.14 * steamVelocity)
     );
 
     // Step 4: Convert to mm
@@ -197,6 +238,7 @@ const calculateSteamPipeCapacity = async (req, res) => {
     const steamVelocity = Number(velocity);
 
     if (
+      !finiteNumbers(pressure, diameterMm, steamVelocity) ||
       pressure < 0 ||
       diameterMm <= 0 ||
       steamVelocity <= 0
@@ -226,9 +268,10 @@ const calculateSteamPipeCapacity = async (req, res) => {
       diameterMm / 1000;
 
     // Step 2: Calculate volumetric capacity
+    // Excel: (3.14 * D^2 * v * 3600) / 4
     const volumetricFlowCapacity =
       (
-        Math.PI *
+        3.14 *
         Math.pow(diameterMeter, 2) *
         steamVelocity *
         3600
@@ -370,8 +413,9 @@ const calculateSafetyValveOrifice = async (req, res) => {
     //
     // D = √(A × 4 / π)
     //
+    // Excel formula: D = SQRT(A*4/3.14)
     const orificeDiameter = Math.sqrt(
-      (orificeArea * 4) / Math.PI
+      (orificeArea * 4) / 3.14
     );
 
     return res.status(200).json({
@@ -1126,7 +1170,7 @@ const calculateBoilerDirectEfficiency = async (req, res) => {
           steamCost: {
 
             value: Number(
-              steamCost.toFixed(2)
+              steamCost.toFixed(3)
             ),
 
             unit: "Rs/kg",
@@ -1556,6 +1600,7 @@ const calculateSteamRequirementForProcessHeating = async (req, res) => {
     // Positive value validation
 
     if (
+      !finiteNumbers(flowRate, initialTemp, finalTemp, cp, pressure) ||
       flowRate <= 0 ||
       cp <= 0 ||
       pressure < 0
@@ -1795,13 +1840,13 @@ const calculateAirCoolingLoad = async (req, res) => {
       inletTemp - outletTemp;
 
     // STEP 2: Cooling Load
-
+    // Excel: airFlow * density * (inletTemp - outletTemp) * cp * 60
     const coolingLoad =
       flow *
-      60 *
       density *
+      airTemperatureDifference *
       cp *
-      airTemperatureDifference;
+      60;
 
     // STEP 3: Chilled Water Temperature Difference
 
@@ -1851,7 +1896,7 @@ const calculateAirCoolingLoad = async (req, res) => {
 
           coolingLoad: {
             value: Number(
-              coolingLoad.toFixed(2)
+              coolingLoad.toFixed(4)
             ),
             unit: "Kcal/hr",
           },
@@ -1871,7 +1916,7 @@ const calculateAirCoolingLoad = async (req, res) => {
 
           coolingLoad: {
             value: Number(
-              coolingLoad.toFixed(2)
+              coolingLoad.toFixed(4)
             ),
             unit: "Kcal/hr",
           },
@@ -1879,7 +1924,7 @@ const calculateAirCoolingLoad = async (req, res) => {
 
           chilledWaterFlowRate: {
             value: Number(
-              chilledWaterFlowRate.toFixed(2)
+              chilledWaterFlowRate.toFixed(5)
             ),
             unit: "kg/hr",
           },
@@ -1941,9 +1986,10 @@ const calculateLiquidPipeDiameter = async (req, res) => {
     const flowRatePerSecond = flow / 3600;
 
     // Step 2: Calculate pipe diameter in meters
+    // Excel: SQRT((4 * Q) / (3.14 * v))
     const pipeDiameterMeter = Math.sqrt(
       (4 * flowRatePerSecond) /
-      (Math.PI * liquidVelocity)
+      (3.14 * liquidVelocity)
     );
 
     // Step 3: Convert meters to mm
@@ -2040,8 +2086,9 @@ const calculateLiquidPipeCapacity = async (req, res) => {
       diameterMm / 1000;
 
     // Step 2: Calculate cross-sectional area
+    // Excel: (3.14 * D^2) / 4
     const crossSectionalArea =
-      (Math.PI *
+      (3.14 *
         Math.pow(diameterMeter, 2)) / 4;
 
     // Step 3: Calculate flow capacity in m³/s
@@ -2153,6 +2200,7 @@ const calculateSteamRequiredForEvaporation = async (req, res) => {
 
     // Validate numeric values
     if (
+      !finiteNumbers(totalQty, evapQty, evapPressure, initialTemp, cp, supplySteamPressure) ||
       totalQty <= 0 ||
       evapQty <= 0 ||
       evapQty > totalQty ||
@@ -2770,8 +2818,9 @@ const calculateTankDimensionsAndWeight = async (req, res) => {
       const radius =
         tankDiameter / 2;
 
+      // Excel: H6/(3.14*(H7/2)^2)
       const crossSectionArea =
-        Math.PI *
+        3.14 *
         Math.pow(radius, 2);
 
       const tankLength =
@@ -2779,18 +2828,18 @@ const calculateTankDimensionsAndWeight = async (req, res) => {
         crossSectionArea;
 
       // STEP 2: Volume Check
-
+      // Excel: 3.14*L*D^2/4
       const calculatedVolume =
-        Math.PI *
+        3.14 *
         tankLength *
         Math.pow(tankDiameter, 2) /
         4;
 
       // STEP 3: Circumference
-
+      // Excel: 2*3.14*(D/2)
       const circumference =
-        Math.PI *
-        tankDiameter;
+        2 * 3.14 *
+        radius;
 
       // STEP 4: Shell Sheet Volume
 
@@ -2806,15 +2855,16 @@ const calculateTankDimensionsAndWeight = async (req, res) => {
         density;
 
       // STEP 6: End Plate Area
-
+      // Excel: 3.14 * r^2
       const endPlateArea =
-        Math.PI *
+        3.14 *
         Math.pow(radius, 2);
 
       // STEP 7: End Plate Volume
+      // Excel H32 = thickness (m), H33 = H32*H31*density
+      // End plate weight = thickness * numberOfEndPlates * density
 
       const endPlateVolume =
-        endPlateArea *
         thicknessMeter *
         endPlates;
 
@@ -2831,9 +2881,9 @@ const calculateTankDimensionsAndWeight = async (req, res) => {
         endPlateWeight;
 
       // STEP 10: Surface Area
-
+      // Excel: 3.14 * D * L
       const surfaceArea =
-        Math.PI *
+        3.14 *
         tankDiameter *
         tankLength;
 
@@ -3009,6 +3059,21 @@ const calculateHeatingCoolingSystem = async (req, res) => {
     // ==============================
 
     if (
+      !finiteNumbers(
+        hotWaterFlow,
+        hotWaterInlet,
+        hotWaterOutlet,
+        pressure,
+        steamVel,
+        hotWaterVel,
+        coolingWaterFlow,
+        coolingWaterInlet,
+        coolingWaterOutlet,
+        chilledWaterInlet,
+        chilledWaterOutlet,
+        coolingWaterVel,
+        chilledWaterVel
+      ) ||
       hotWaterFlow <= 0 ||
       pressure <= 0 ||
       steamVel <= 0 ||
@@ -3035,11 +3100,11 @@ const calculateHeatingCoolingSystem = async (req, res) => {
       });
     }
 
-    if (coolingWaterOutlet <= coolingWaterInlet) {
+    if (coolingWaterOutlet >= coolingWaterInlet) {
       return res.status(400).json({
         success: false,
         message:
-          "Cooling water outlet temperature must be greater than inlet temperature",
+          "Cooling water outlet temperature must be lower than inlet temperature",
       });
     }
 
@@ -3097,11 +3162,12 @@ const calculateHeatingCoolingSystem = async (req, res) => {
 
     // ======================================
     // STEAM PIPE DIAMETER
+    // Excel: SQRT((Q*4)/(3.14*v))
     // ======================================
 
     const steamPipeDiameterMeter = Math.sqrt(
       (steamVolumetricFlowPerSecond * 4) /
-        (Math.PI * steamVel)
+        (3.14 * steamVel)
     );
 
     const steamPipeDiameterMm =
@@ -3109,6 +3175,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
 
     // ======================================
     // HOT WATER PIPE DIAMETER
+    // Excel: SQRT((Q*4)/(3.14*v))
     // ======================================
 
     const hotWaterVolumetricFlowPerSecond =
@@ -3117,7 +3184,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
     const hotWaterPipeDiameterMeter =
       Math.sqrt(
         (hotWaterVolumetricFlowPerSecond * 4) /
-          (Math.PI * hotWaterVel)
+          (3.14 * hotWaterVel)
       );
 
     const hotWaterPipeDiameterMm =
@@ -3143,6 +3210,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
 
     // ======================================
     // COOLING WATER PIPE DIAMETER
+    // Excel: SQRT((Q*4)/(3.14*v))
     // ======================================
 
     const coolingWaterFlowPerSecond =
@@ -3151,7 +3219,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
     const coolingWaterPipeDiameterMeter =
       Math.sqrt(
         (coolingWaterFlowPerSecond * 4) /
-          (Math.PI * coolingWaterVel)
+          (3.14 * coolingWaterVel)
       );
 
     const coolingWaterPipeDiameterMm =
@@ -3159,6 +3227,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
 
     // ======================================
     // CHILLED WATER PIPE DIAMETER
+    // Excel: SQRT((Q*4)/(3.14*v))
     // ======================================
 
     const chilledWaterFlowPerSecond =
@@ -3167,7 +3236,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
     const chilledWaterPipeDiameterMeter =
       Math.sqrt(
         (chilledWaterFlowPerSecond * 4) /
-          (Math.PI * chilledWaterVel)
+          (3.14 * chilledWaterVel)
       );
 
     const chilledWaterPipeDiameterMm =
@@ -3342,7 +3411,7 @@ const calculateWeight = async (req, res) => {
       const innerDiameter = od - 2 * t;
 
       const crossSectionalArea =
-        (Math.PI * (Math.pow(od, 2) - Math.pow(innerDiameter, 2))) / 4;
+        (3.14 * (Math.pow(od, 2) - Math.pow(innerDiameter, 2))) / 4;
 
       volume = crossSectionalArea * lengthMeter;
       weight = volume * materialDensity;
@@ -3379,8 +3448,9 @@ const calculateWeight = async (req, res) => {
         });
       }
 
+      // Excel: (3.14/4)*d^2*length*density
       volume =
-        (Math.PI / 4) *
+        (3.14 / 4) *
         Math.pow(d, 2) *
         lengthMeter;
 
@@ -3962,6 +4032,7 @@ const calculateSuperheatedSteamPipeSize = async (req, res) => {
     const steamVelocity = Number(velocity);
 
     if (
+      !finiteNumbers(P, temperatureC, flowRate, steamVelocity) ||
       P <= 0 ||
       temperatureC <= 0 ||
       flowRate <= 0 ||
@@ -3978,16 +4049,16 @@ const calculateSuperheatedSteamPipeSize = async (req, res) => {
     // ============================
 
     // Critical Temperature of Water
-    const Tc = 647.3; // Kelvin
+    const Tc = 647.14; // Kelvin
 
     // Critical Pressure of Water
     const Pc = 220.64; // bar
 
     // Molecular Weight of Water
-    const MW = 18.015;
+    const MW = 18;
 
     // Universal Gas Constant
-    const R = 8314;
+    const R = 8.314;
 
     // ============================
     // STEP 1
@@ -4086,12 +4157,8 @@ const calculateSuperheatedSteamPipeSize = async (req, res) => {
     // STEP 7
     // PIPE DIAMETER
     //
-    // D =
-    // √(
-    // (4 × Mass Flow × Specific Volume)
-    // /
-    // (π × 3600 × Velocity)
-    // )
+    // Excel Sheet17: SQRT(4 * massFlow * specVol / (PI() * 3600 * v))
+    // Note: Sheet17 uses pi() (actual PI), not 3.14
     // ============================
 
     const pipeDiameterMeter =
@@ -4216,6 +4283,243 @@ const calculateSuperheatedSteamPipeSize = async (req, res) => {
     });
   }
 };
+
+const calculateFAboilerCapacity = async (req, res) => {
+  try {
+    const {
+      boilerOperatingPressure,
+      boilerCapacity,
+      feedWaterTemperature,
+      atmosphericLatentHeat = 540,
+    } = req.body;
+    const pressure = Number(boilerOperatingPressure);
+    const capacity = Number(boilerCapacity);
+    const feedWaterTemp = Number(feedWaterTemperature);
+    const atmosphericHeat = Number(atmosphericLatentHeat);
+
+    if (
+      !finiteNumbers(pressure, capacity, feedWaterTemp, atmosphericHeat) ||
+      pressure < 0 ||
+      capacity <= 0 ||
+      feedWaterTemp < 0 ||
+      atmosphericHeat <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter valid finite calculator values",
+      });
+    }
+
+    const steamData = findSteamData(pressure);
+    if (!steamData) {
+      return res.status(404).json({
+        success: false,
+        message: `Steam data not found for ${pressure} bar(g)`,
+      });
+    }
+
+    const latentHeatDifference =
+      (steamData.totalHeat - atmosphericHeat - feedWaterTemp) /
+      atmosphericHeat;
+    const capacityDifference = latentHeatDifference * capacity;
+    const netSteamDelivery = capacity - capacityDifference;
+
+    return res.status(200).json({
+      success: true,
+      message: "F&A boiler capacity calculated successfully",
+      data: {
+        steamProperties: {
+          totalHeat: { value: steamData.totalHeat, unit: "kcal/kg" },
+        },
+        calculationSteps: {
+          latentHeatDifference: {
+            value: latentHeatDifference,
+            unit: "dimensionless",
+          },
+          capacityDifference: {
+            value: capacityDifference,
+            unit: "kg/hr",
+          },
+        },
+        result: {
+          netSteamDelivery: {
+            value: netSteamDelivery,
+            unit: "kg/hr",
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("F&A Boiler Capacity Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+const calculatePRDS = async (req, res) => {
+  try {
+    const {
+      steamFlowRate,
+      inletPressure,
+      inletTemperature,
+      outletPressure,
+      requiredOutletTemperature,
+      waterTemperature,
+      waterPressure,
+      outletSuperheatedTemperature,
+      inletVelocity = 35,
+      prsOutletVelocity = 35,
+      desuperheaterOutletVelocity = 25,
+      waterInjectionVelocity = 1.5,
+    } = req.body;
+    const values = [
+      steamFlowRate,
+      inletPressure,
+      inletTemperature,
+      outletPressure,
+      requiredOutletTemperature,
+      waterTemperature,
+      waterPressure,
+      outletSuperheatedTemperature,
+      inletVelocity,
+      prsOutletVelocity,
+      desuperheaterOutletVelocity,
+      waterInjectionVelocity,
+    ].map(Number);
+    if (!finiteNumbers(...values) || values.some((value) => value <= 0)) {
+      return res.status(400).json({ success: false, message: "All PRDS inputs must be finite positive values" });
+    }
+    const [flow, inletP, inletT, outletP, requiredT, waterT, waterP, outletT, inletV, prsV, outletV, waterV] = values;
+    if (outletP >= inletP) {
+      return res.status(400).json({ success: false, message: "Outlet pressure must be lower than inlet pressure" });
+    }
+
+    const inlet = calculateSuperheatedProperties(inletP, inletT);
+    const prsOutlet = calculateSuperheatedProperties(outletP, outletT);
+    const required = calculateSuperheatedProperties(outletP, requiredT);
+    if (!inlet || !prsOutlet || !required) {
+      return res.status(400).json({ success: false, message: "Unable to calculate finite PRDS steam properties" });
+    }
+
+    const availableHeatPerKg = inlet.enthalpyKcalKg - required.enthalpyKcalKg;
+    const availableHeatTotal = availableHeatPerKg * flow;
+    const heatGainByWater = required.enthalpyKcalKg - waterT;
+    if (heatGainByWater <= 0) {
+      return res.status(400).json({ success: false, message: "Water temperature must be below required outlet steam heat" });
+    }
+    const waterQuantity = availableHeatTotal / heatGainByWater;
+    const inletDiameter = Math.sqrt((4 * flow * inlet.specificVolume) / (3.14 * 3600 * inletV));
+    const prsDiameter = Math.sqrt((4 * flow * prsOutlet.specificVolume) / (3.14 * 3600 * prsV));
+    const mixedFlow = (flow + waterQuantity) * required.specificVolume;
+    const desuperheaterDiameter = Math.sqrt((4 * mixedFlow) / (3.14 * 3600 * outletV));
+    const waterDiameter = Math.sqrt((4 * (waterQuantity / 1000) / 3600) / (3.14 * waterV));
+
+    return res.status(200).json({
+      success: true,
+      message: "PRDS de-superheating calculation completed successfully",
+      data: {
+        inputs: { steamFlowRate: flow, inletPressure: inletP, inletTemperature: inletT, outletPressure: outletP, requiredOutletTemperature: requiredT, waterTemperature: waterT, waterPressure: waterP, outletSuperheatedTemperature: outletT },
+        steamProperties: {
+          inlet,
+          prsOutlet,
+          requiredOutlet: required,
+        },
+        calculationSteps: {
+          availableHeatPerKg: { value: availableHeatPerKg, unit: "kcal/kg" },
+          availableHeatTotal: { value: availableHeatTotal, unit: "kcal/hr" },
+          heatGainByWater: { value: heatGainByWater, unit: "kcal/kg" },
+          requiredWaterQuantity: { value: waterQuantity, unit: "kg/hr" },
+        },
+        pipeSizing: {
+          inletDiameter: { value: inletDiameter * 1000, unit: "mm" },
+          prsOutletDiameter: { value: prsDiameter * 1000, unit: "mm" },
+          desuperheaterOutletDiameter: { value: desuperheaterDiameter * 1000, unit: "mm" },
+          waterInjectionDiameter: { value: waterDiameter * 1000, unit: "mm" },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("PRDS Calculator Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const calculateGeneralPipeWallThickness = async (req, res) => {
+  try {
+    const {
+      pipeType,
+      materialGrade,
+      designPressure,
+      operatingTemperature,
+      nominalPipeSize,
+      pipeSchedule,
+      mechanicalAllowance = 0,
+    } = req.body;
+    const pressureBar = Number(designPressure);
+    const temperature = Number(operatingTemperature);
+    const allowance = Number(mechanicalAllowance);
+
+    if (
+      !pipeType ||
+      !finiteNumbers(pressureBar, temperature, allowance) ||
+      pressureBar <= 0 ||
+      temperature < 0 ||
+      allowance < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter valid finite calculator values",
+      });
+    }
+
+    const pipe = getGeneralPipeData(
+      materialGrade,
+      temperature,
+      nominalPipeSize,
+      pipeSchedule
+    );
+    if (!pipe) {
+      return res.status(400).json({
+        success: false,
+        message: "Reference pipe, stress, Y factor, or schedule data not found",
+      });
+    }
+
+    const qualityFactor = pipeType === "Welded" ? 0.85 : 1;
+    const pressureMPa = pressureBar / 10;
+    const calculatedThickness =
+      (pressureMPa * pipe.outsideDiameter) /
+      (2 * (pipe.allowableStress * qualityFactor + pipe.coefficientY * pressureMPa));
+    const requiredThickness = calculatedThickness + allowance;
+
+    return res.status(200).json({
+      success: true,
+      message: "General ASME pipe wall thickness calculated successfully",
+      data: {
+        materialProperties: {
+          allowableStress: pipe.allowableStress,
+          coefficientY: pipe.coefficientY,
+          qualityFactor,
+        },
+        pipeProperties: {
+          outsideDiameter: pipe.outsideDiameter,
+          actualWallThickness: pipe.actualWallThickness,
+          mechanicalAllowance: allowance,
+        },
+        calculationSteps: { pressureMPa, calculatedThickness, requiredThickness },
+        result: {
+          safetyStatus: requiredThickness <= pipe.actualWallThickness ? "SAFE" : "NOT SAFE",
+        },
+      },
+    });
+  } catch (error) {
+    console.error("General ASME Pipe Wall Thickness Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 const calculatePipeWallThickness = async (req, res) => {
   try {
     const {
@@ -4252,6 +4556,7 @@ const calculatePipeWallThickness = async (req, res) => {
     const allowance = Number(mechanicalAllowance);
 
     if (
+      !finiteNumbers(pressureBar, temperature, allowance) ||
       pressureBar <= 0 ||
       temperature <= 0 ||
       allowance < 0
@@ -4297,7 +4602,7 @@ const calculatePipeWallThickness = async (req, res) => {
     const actualWallThickness =
       scheduleData[pipeSchedule];
 
-    if (!actualWallThickness) {
+    if (!Number.isFinite(actualWallThickness)) {
       return res.status(400).json({
         success: false,
         message:
@@ -4408,7 +4713,7 @@ const calculatePipeWallThickness = async (req, res) => {
     // =====================================
 
     const isSafe =
-      requiredThickness <
+      requiredThickness <=
       actualWallThickness;
 
     const safetyStatus =
@@ -4602,6 +4907,9 @@ module.exports = {
   calculateWeight,
   calculatePRSSteamSaving,
   calculateSuperheatedSteamPipeSize,
+  calculateFAboilerCapacity,
+  calculatePRDS,
+  calculateGeneralPipeWallThickness,
   calculatePipeWallThickness,
   
 };

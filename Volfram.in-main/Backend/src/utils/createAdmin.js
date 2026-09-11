@@ -11,7 +11,7 @@ const User = require('../models/register.models.js');
 async function createAdminUser() {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
     console.log('Connected to MongoDB ✅');
 
     // Admin user details

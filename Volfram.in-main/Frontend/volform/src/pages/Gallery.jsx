@@ -83,7 +83,7 @@ export default function Gallery() {
   useEffect(() => {
     fetchSectionImages('gallery').then(imgs => {
       if (imgs.length > 0) {
-        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
         // Map DB images to same shape as hardcoded items
         setDbImages(imgs.map(img => ({
           name: img.caption || 'Gallery Image',

@@ -41,7 +41,7 @@ const handleSubmit = async (e) => {
   setStatus("");
 
   try {
-    const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+    const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
     const response = await fetch(`${API_URL}/api/enquiry`, {
       method: "POST",
       headers: {
@@ -184,3 +184,4 @@ const handleSubmit = async (e) => {
     </div>
   );
 }
+

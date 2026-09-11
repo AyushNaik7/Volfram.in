@@ -72,7 +72,7 @@ function LiquidPipeCalculator() {
     setDiameterResult(null);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await fetch(
         `${API_BASE_URL}/api/calculators/liquid-pipe/diameter`,
         {
@@ -82,7 +82,10 @@ function LiquidPipeCalculator() {
             "Content-Type": "application/json",
           },
 
-          body: JSON.stringify(diameterForm),
+          body: JSON.stringify({
+            flowRate: Number(diameterForm.flowRate),
+            velocity: Number(diameterForm.velocity),
+          }),
         }
       );
 
@@ -121,7 +124,7 @@ function LiquidPipeCalculator() {
     setCapacityResult(null);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await fetch(
         `${API_BASE_URL}/api/calculators/liquid-pipe/capacity`,
         {
@@ -131,7 +134,10 @@ function LiquidPipeCalculator() {
             "Content-Type": "application/json",
           },
 
-          body: JSON.stringify(capacityForm),
+          body: JSON.stringify({
+            pipeDiameter: Number(capacityForm.pipeDiameter),
+            velocity: Number(capacityForm.velocity),
+          }),
         }
       );
 

@@ -52,7 +52,7 @@ function HeatingCoolingSystemCalculator() {
         requestData[key] = Number(formData[key]);
       });
 
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:7000";
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
       const response = await axios.post(
         `${API_BASE_URL}/api/calculators/heating-cooling-system`,
         requestData
@@ -143,6 +143,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="hotWaterFlowRate"
                 value={formData.hotWaterFlowRate}
                 onChange={handleChange}
@@ -161,6 +162,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="hotWaterInletTemp"
                 value={formData.hotWaterInletTemp}
                 onChange={handleChange}
@@ -179,6 +181,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="hotWaterOutletTemp"
                 value={formData.hotWaterOutletTemp}
                 onChange={handleChange}
@@ -197,6 +200,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="steamPressure"
                 value={formData.steamPressure}
                 onChange={handleChange}
@@ -215,6 +219,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="steamVelocity"
                 value={formData.steamVelocity}
                 onChange={handleChange}
@@ -233,6 +238,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="hotWaterVelocity"
                 value={formData.hotWaterVelocity}
                 onChange={handleChange}
@@ -263,6 +269,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="coolingWaterFlowRate"
                 value={formData.coolingWaterFlowRate}
                 onChange={handleChange}
@@ -281,6 +288,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="coolingWaterInletTemp"
                 value={formData.coolingWaterInletTemp}
                 onChange={handleChange}
@@ -299,6 +307,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="coolingWaterOutletTemp"
                 value={formData.coolingWaterOutletTemp}
                 onChange={handleChange}
@@ -317,6 +326,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="chilledWaterInletTemp"
                 value={formData.chilledWaterInletTemp}
                 onChange={handleChange}
@@ -335,6 +345,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="chilledWaterOutletTemp"
                 value={formData.chilledWaterOutletTemp}
                 onChange={handleChange}
@@ -353,6 +364,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="coolingWaterVelocity"
                 value={formData.coolingWaterVelocity}
                 onChange={handleChange}
@@ -371,6 +383,7 @@ function HeatingCoolingSystemCalculator() {
 
               <input
                 type="number"
+                step="any"
                 name="chilledWaterVelocity"
                 value={formData.chilledWaterVelocity}
                 onChange={handleChange}

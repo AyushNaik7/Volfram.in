@@ -17,7 +17,7 @@ const DEFAULT_EVENT_OPTIONS = [
   { id: 'boiler-world', title: 'Boiler World Expo' }
 ];
 
-const BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:7000';
+const BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
 
 function ImageManager() {
   const [activeSection, setActiveSection]   = useState('gallery');
@@ -478,3 +478,4 @@ const s = {
 };
 
 export default ImageManager;
+
