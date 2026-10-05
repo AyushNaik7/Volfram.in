@@ -12,6 +12,9 @@ function SuperheatedSteamPipeCalculator() {
     velocity: "",
   });
 
+  // "bar" = bar absolute, "barg" = bar gauge
+  const [pressureUnit, setPressureUnit] = useState("bar");
+
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,10 +45,18 @@ function SuperheatedSteamPipeCalculator() {
 
     try {
       const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
+
+      // Convert bar g → bar absolute before sending to backend
+      const pressureRaw = Number(formData.pressure);
+      const pressureAbsolute =
+        pressureUnit === "barg"
+          ? pressureRaw + 1.01325
+          : pressureRaw;
+
       const response = await axios.post(
         `${API_BASE_URL}/api/calculators/superheated-steam-pipe/size`,
         {
-          pressure: Number(formData.pressure),
+          pressure: pressureAbsolute,
           temperature: Number(formData.temperature),
           steamFlowRate: Number(formData.steamFlowRate),
           velocity: Number(formData.velocity),
@@ -53,7 +64,12 @@ function SuperheatedSteamPipeCalculator() {
       );
 
       if (response.data.success) {
-        setResult(response.data.data);
+        // Attach the original user-entered pressure + unit to the result
+        setResult({
+          ...response.data.data,
+          _enteredPressure: pressureRaw,
+          _pressureUnit: pressureUnit,
+        });
       }
     } catch (err) {
       console.error(
@@ -82,6 +98,7 @@ function SuperheatedSteamPipeCalculator() {
       velocity: "",
     });
 
+    setPressureUnit("bar");
     setResult(null);
     setError("");
   };
@@ -126,16 +143,54 @@ function SuperheatedSteamPipeCalculator() {
 
             <div style={styles.inputGrid}>
 
-              {/* PRESSURE */}
+              {/* PRESSURE — with bar / bar g unit selector */}
 
-              <InputField
-                label="Steam Pressure (bar)"
-                name="pressure"
-                value={formData.pressure}
-                onChange={handleChange}
-                placeholder="Example: 5"
-                helpText="Operating steam pressure"
-              />
+              <div style={styles.field}>
+                <label style={styles.label}>
+                  Steam Pressure
+                </label>
+
+                {/* Unit toggle tags */}
+                <div style={styles.unitToggleRow}>
+                  {["bar", "barg"].map((unit) => (
+                    <button
+                      key={unit}
+                      type="button"
+                      style={{
+                        ...styles.unitTag,
+                        ...(pressureUnit === unit
+                          ? styles.unitTagActive
+                          : {}),
+                      }}
+                      onClick={() => setPressureUnit(unit)}
+                    >
+                      {unit === "bar" ? "bar (abs)" : "bar g"}
+                    </button>
+                  ))}
+                </div>
+
+                <input
+                  type="number"
+                  name="pressure"
+                  value={formData.pressure}
+                  onChange={handleChange}
+                  placeholder={
+                    pressureUnit === "barg"
+                      ? "Example: 10 bar g"
+                      : "Example: 11 bar abs"
+                  }
+                  min="0"
+                  step="any"
+                  required
+                  style={styles.input}
+                />
+
+                <small style={styles.helpText}>
+                  {pressureUnit === "barg"
+                    ? "Gauge pressure — will be converted to absolute before calculation"
+                    : "Absolute pressure"}
+                </small>
+              </div>
 
 
               {/* TEMPERATURE */}
@@ -232,13 +287,29 @@ function SuperheatedSteamPipeCalculator() {
 
             <div style={styles.resultGrid}>
               {Object.entries(result.inputs).map(
-                ([key, item]) => (
-                  <ResultBox
-                    key={key}
-                    label={formatLabel(key)}
-                    value={`${item.value} ${item.unit}`}
-                  />
-                )
+                ([key, item]) => {
+                  // For pressure, show the user-entered value + chosen unit
+                  if (key === "pressure") {
+                    return (
+                      <ResultBox
+                        key={key}
+                        label="Pressure"
+                        value={`${result._enteredPressure} ${
+                          result._pressureUnit === "barg"
+                            ? "bar g"
+                            : "bar (abs)"
+                        }`}
+                      />
+                    );
+                  }
+                  return (
+                    <ResultBox
+                      key={key}
+                      label={formatLabel(key)}
+                      value={`${item.value} ${item.unit}`}
+                    />
+                  );
+                }
               )}
             </div>
 
@@ -569,6 +640,30 @@ const styles = {
   resultValue: {
     color: "#0f2d4d",
     fontSize: "19px",
+  },
+
+  unitToggleRow: {
+    display: "flex",
+    gap: "8px",
+    marginBottom: "10px",
+  },
+
+  unitTag: {
+    padding: "5px 14px",
+    borderRadius: "20px",
+    border: "1.5px solid #c8d2dc",
+    background: "#f2f5f8",
+    color: "#617080",
+    fontSize: "13px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  },
+
+  unitTagActive: {
+    background: "#0f2d4d",
+    borderColor: "#0f2d4d",
+    color: "#ffffff",
   },
 };
 
