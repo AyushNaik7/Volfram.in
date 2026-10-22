@@ -1,0 +1,199 @@
+import { useState, useEffect } from "react";
+import { fetchSectionImages } from '../services/api';
+
+const categories = ["All Projects", "Boilers", "Installations", "Controls", "Maintenance"];
+
+const galleryItems = [
+  {
+    name: "Champion Gasket",
+    sub: "Volfram Auto Blow Down System",
+    image: "/Gallery/image.png", 
+    category: "Installations",
+  },
+  {
+    name:"Clean Science",
+    sub: "Volfram Pressure Reducing Station",
+    image: "/Gallery/image-copy.png",
+    category: "Boilers",
+  },
+  {
+    name:"IPMC",
+    sub:"Volfram Pressure Reducing System",
+    image:"/Gallery/image-copy-2.png",
+    category:"Controls",
+
+  },
+  {
+    name:"Cipla",
+    sub:"Volfram Heating Cooling System",
+    image:"/Gallery/image-copy-3.png",
+    category:"Maintenance",
+  },
+  {
+    name:"volfram",
+    sub:"Volfram Pressure Reducing System",
+    image:"/Gallery/image-copy-4.png",
+    category:"Maintenance",
+  },
+  {
+    name:"Pepsico Riyad",
+    sub:"Volfram Strainer",
+    image:"/Gallery/image-copy-5.png",
+    category:"Boilers",
+  },
+  {
+    name:"Indocount",
+    sub:"Volfram Pressure Reducing System ",
+    image:"/Gallery/image-copy-6.png",
+    category:"Boilers",
+  },
+  {
+    name:"Champion Gasket",
+    sub:"Volfram Chimaney",
+    image:"/Gallery/image-copy-7.png",
+    category:"Boilers",
+  },
+  {
+    name:"Pressure Reducing System",
+    sub:"Volfram Pressure Reducing System",
+    image:"/Gallery/image-copy-4.png",
+    category:"Boilers",
+
+  },
+  {
+    name:"Heating Cooling System",
+    sub:"Volfram Heating Cooling System",
+    image:"/Gallery/image-copy-3.png",
+    category:"Boilers",
+  },
+  {
+    name:"Strainer",
+    sub:"Volfram Strainer",
+    image:"/Gallery/image-copy-5.png",
+    category:"Boilers",
+  }
+];
+
+export default function Gallery() {
+  const [activeCategory, setActiveCategory] = useState("All Projects");
+  const [activeItem, setActiveItem] = useState(null);
+  const [dbImages, setDbImages] = useState([]);
+
+  // Fetch from DB on mount
+  useEffect(() => {
+    fetchSectionImages('gallery').then(imgs => {
+      if (imgs.length > 0) {
+        const API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
+        // Map DB images to same shape as hardcoded items
+        setDbImages(imgs.map(img => ({
+          name: img.caption || 'Gallery Image',
+          sub: img.description || img.info || '',
+          info: img.info || '',
+          image: `${API_URL}${img.imageUrl}`,
+          category: 'All Projects',
+          _id: img._id
+        })));
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Use DB images if available, else fallback to hardcoded
+  const sourceItems = dbImages.length > 0 ? dbImages : galleryItems;
+
+  // ✅ Filtering logic
+  const filteredItems =
+    activeCategory === "All Projects"
+      ? sourceItems
+      : sourceItems.filter((item) => item.category === activeCategory);
+
+  return (
+    <div className="page-shell">
+      {/* HERO */}
+      <section className="hero-section py-20 md:py-24">
+        <div className="container-custom relative z-10">
+          <span className="badge-industrial mb-4">Gallery</span>
+          <h1 className="max-w-4xl text-4xl leading-tight text-white md:text-6xl md:leading-tight">
+            Project & Installation Highlights
+          </h1>
+          <p className="mt-6 max-w-3xl text-lg text-slate-100">
+            A glimpse into our field execution, plant integration and steam system modernization projects.
+          </p>
+        </div>
+      </section>
+
+      {/* FILTER */}
+      <section className="section-white">
+        <div className="container-custom">
+          <div className="mb-8 flex flex-wrap gap-3">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={
+                  activeCategory === category
+                    ? "btn-primary px-4 py-2"
+                    : "btn-outline-primary px-4 py-2"
+                }
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* GALLERY GRID */}
+          <div className="gallery-grid">
+            {filteredItems.map((item, index) => (
+              <article
+                key={index}
+                className="gallery-card card cursor-pointer"
+                onClick={() => setActiveItem(item)}
+              >
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="gallery-card__image"
+                />
+                <div className="gallery-card__content">
+                  <p className="gallery-card__category">{item.category}</p>
+                  <h3>{item.name}</h3>
+                  {item.sub && <p className="gallery-card__description">{item.sub}</p>}
+                  {item.info && <p className="gallery-card__info">{item.info}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MODAL */}
+      {activeItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setActiveItem(null)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-xl bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activeItem.image}
+              alt={activeItem.name}
+              className="gallery-modal__image"
+            />
+
+            <h2 className="mt-5 text-2xl text-primary">{activeItem.name}</h2>
+            {activeItem.sub && <p className="mt-3 text-slate-600">{activeItem.sub}</p>}
+            {activeItem.info && <p className="mt-3 text-sm text-slate-500">{activeItem.info}</p>}
+
+            <button
+              className="btn-primary mt-6"
+              onClick={() => setActiveItem(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

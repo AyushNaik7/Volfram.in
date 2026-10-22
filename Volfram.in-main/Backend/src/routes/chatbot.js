@@ -1,0 +1,285 @@
+const express = require('express');
+const router = express.Router();
+const { openai, model } = require('../config/openai');
+const mongoose = require('mongoose');
+const ChatbotLead = require('../models/ChatbotLead.models.js');
+const Register = require('../models/register.models.js');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth');
+
+// System prompt with Volfram product knowledge
+const SYSTEM_PROMPT = `You are a helpful quotation assistant for Volfram Systems India Pvt. Ltd., a boiler and steam system company.
+
+Your role is to help customers get accurate quotations for steam systems, boilers, PRDS (Pressure Reducing & De-superheating Stations), and related equipment.
+
+You should:
+1. Greet customers warmly
+2. Ask about their requirements (product type, specifications, dimensions, pressure, temperature, etc.)
+3. Gather all necessary technical details
+4. Calculate pricing based on the specifications
+5. Generate a quotation
+
+Available Products:
+- Steam Pipe Sizing Systems
+- PRDS (Pressure Reducing & De-superheating Station)
+- Boiler Systems
+- Condensate Recovery Systems
+- Steam Flow Meters
+- Safety Valves
+- Custom Steam Solutions
+
+You should also be able to answer basic questions about the company using the information below, even if the customer isn't asking for a quotation.
+
+## Company Info & FAQs
+
+Q: Who is Volfram Systems / what does the company do?
+A: Volfram Systems India Pvt. Ltd. is an IBR-certified steam engineering and pressure vessel manufacturing company. We deliver sustainable, efficient steam systems, and have been serving the industry for 14 years with 600+ happy customers globally.
+
+Q: What industries does Volfram Systems serve?
+A: We serve Pharmaceutical & Chemical, Food & Beverage, Textile & Paper, and Oil & Gas industries, among others.
+
+Q: What products does Volfram Systems offer?
+A: Our products fall into these categories:
+- Steam Generation: Small Industrial Boiler, Packaged Solid Fuel Boiler, Packaged Oil/Gas Fired Boiler
+- Boiler House Accessories: TDS Based Automatic Boiler Blow Down System, Chemical Dosing System, Packaged Feed Water Tank System, Deaerator Head, Level Control System, Steam Injector, V-Wise Smart Boiler Controller, Orifice Flow Meter
+- Steam Distribution: Steam Trap, Strainer, Valves, Pressure Reducing Station (PRS), Pressure Reducing & De-Superheating Station (PRDS), Steam Control Valve, Temperature Control System, Pressure Gauges, Automatic Pumping Trap, Moisture Separator, Sight Glass
+- Customized Package Solutions: Condensate Recovery System, Condensate Contamination Monitoring & Control System, Heat Exchanger, Waste Heat Recovery System, pH Control System, Steam Based Hot Water Generation System, Vapomax Pump, Autoclave
+- Process Instruments: Pressure Transmitter
+
+Q: Does Volfram make boilers?
+A: Yes — we manufacture Small Industrial Boilers, Packaged Solid Fuel Boilers, and Packaged Oil/Gas Fired Boilers, along with a full range of boiler house accessories.
+
+Q: What is a PRDS / Pressure Reducing and De-Superheating Station?
+A: It's part of our Steam Distribution product line, used to reduce steam pressure and control temperature (de-superheating) as steam is distributed through a plant.
+
+Q: Do you offer condensate recovery systems?
+A: Yes, we offer Condensate Recovery Systems as well as Condensate Contamination Monitoring & Control Systems as part of our Customized Package Solutions. We've installed 422+ condensate recovery systems across various industry segments.
+
+Q: What services does Volfram Systems provide besides manufacturing?
+A: We offer:
+- Steam & Condensate System Audits of existing plants
+- Designing of complete Steam & Condensate Systems for new projects
+Our audits cover Steam Generation efficiency, Steam Distribution (pipe sizing, insulation, pressure reduction), Steam Utilization, and Heat Recovery. We also help with implementation, post-implementation monitoring, savings evaluation, and training your engineering/maintenance/boiler team.
+
+Q: What is a steam audit?
+A: A steam audit studies your existing plant's steam generation, distribution, and utilization efficiency, then recommends how to reduce fuel costs — including designing and implementing energy conservation projects and training your team to sustain the savings.
+
+Q: Is Volfram Systems a distributor for any other brands?
+A: Yes, we are the Principal Distributor for Walchem and Pyxis Lab products in India, Bangladesh, and Sri Lanka.
+
+Q: Where is Volfram Systems located?
+A: We have two locations:
+- Corporate / Admin Office: 402, Rutuvihar, Waranasi Society, Warje, Pune – 411058, Maharashtra, India
+- Manufacturing Unit: Akurdi Industrial Estate, Plot No. 3B+3 Part / 32, D-1 Block, MIDC, Chinchwad, Pune – 411019, Maharashtra, India
+
+Q: Where is your manufacturing unit?
+A: Akurdi Industrial Estate, Plot No. 3B+3 Part / 32, D-1 Block, MIDC, Chinchwad, Pune – 411019, Maharashtra, India.
+
+Q: Where is your corporate/admin office?
+A: 402, Rutuvihar, Waranasi Society, Warje, Pune – 411058, Maharashtra, India.
+
+Q: How can I contact Volfram Systems?
+A:
+- Email: steam@volfram.in
+- General Enquiry / Sales Dept: +91 9309534688
+- Purchase Dept: +91 9172033598
+- WhatsApp is also available via the contact links on our website
+You can also just share your requirement here and I'll help you get started with a quotation.
+
+Q: Does Volfram Systems have social media / can I see more of your work?
+A: Yes — we're active on Instagram (@volfram_systems), Facebook (Volfram Systems), LinkedIn, and YouTube, where we post product demos and event coverage (e.g. Boiler India Expo, Boiler World Expo Africa).
+
+Q: How many years has Volfram Systems been in business?
+A: We've been serving the industry for 14 years.
+
+If a customer asks something not covered by the information above (e.g. detailed pricing, technical datasheets, certifications beyond IBR, staff/leadership details), be honest that you don't have that specific detail and direct them to email steam@volfram.in or call +91 9309534688 rather than guessing.
+
+Ask questions one at a time to avoid overwhelming the customer. Be technical but friendly.`;
+
+function handleChatError(error) {
+    console.error('Chat error:', error.message);
+    return 'Sorry, something went wrong. Please email steam@volfram.in for assistance.';
+}
+
+router.post('/chat/lead', authMiddleware, async (req, res) => {
+    try {
+        const { session_id: sessionId, customerInfo, quoteDetails, message } = req.body;
+        if (!sessionId) return res.status(400).json({ success: false, message: 'Session ID is required.' });
+        const account = await Register.findById(req.user.userId).select('name email number');
+        if (!account) return res.status(404).json({ success: false, message: 'Logged-in user not found.' });
+        const contact = {
+            name: account.name || customerInfo?.name,
+            email: account.email || customerInfo?.email,
+            phone: account.number || customerInfo?.phone
+        };
+        if (!contact.name || !contact.email || !contact.phone) return res.status(400).json({ success: false, message: 'Your account is missing contact details.' });
+
+        const lead = await ChatbotLead.findOneAndUpdate(
+            { sessionId },
+            {
+                $set: {
+                    user: req.user.userId,
+                    customerName: contact.name.trim(),
+                    customerEmail: contact.email.trim().toLowerCase(),
+                    customerPhone: contact.phone.trim(),
+                    quoteDetails: quoteDetails || {},
+                    quoteSubmitted: true
+                },
+                ...(message ? { $push: { messages: { role: 'user', content: message } } } : {})
+            },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        res.status(201).json({ success: true, conversationId: lead._id, lead });
+    } catch (error) {
+        console.error('Chatbot lead save error:', error);
+        res.status(500).json({ success: false, message: 'Unable to save chatbot enquiry.' });
+    }
+});
+
+router.get('/chat/my-leads', authMiddleware, async (req, res) => {
+    try {
+        const leads = await ChatbotLead.find({ user: req.user.userId }).sort({ updatedAt: -1 });
+        res.json({ leads });
+    } catch (error) {
+        res.status(500).json({ message: 'Unable to load your chatbot requests.', error: error.message });
+    }
+});
+
+// POST /api/chat/chat - Handle chat messages
+router.post('/chat/chat', optionalAuthMiddleware, async (req, res) => {
+    try {
+        const { message, conversationId, session_id: sessionId, customerInfo, quoteDetails, quoteSubmitted } = req.body;
+
+        // Validate request
+        if (!message) {
+            return res.status(400).json({
+                success: false,
+                error: 'validation_error',
+                message: 'Message is required'
+            });
+        }
+
+        if (!openai) {
+            return res.status(503).json({
+                success: false,
+                error: 'chatbot_not_configured',
+                message: 'AI chat is not configured. Your authenticated enquiry can still be submitted.'
+            });
+        }
+
+        if (conversationId && !mongoose.isValidObjectId(conversationId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'validation_error',
+                message: 'Invalid conversation id'
+            });
+        }
+
+        let conversation = conversationId
+            ? await ChatbotLead.findById(conversationId)
+            : sessionId ? await ChatbotLead.findOne({ sessionId }) : null;
+
+        if (conversationId && !conversation) {
+            return res.status(404).json({
+                success: false,
+                error: 'conversation_not_found',
+                message: 'Conversation not found'
+            });
+        }
+
+        if (!conversation) {
+            conversation = new ChatbotLead({
+                sessionId: sessionId || new mongoose.Types.ObjectId().toString(),
+                user: req.user?.userId || null,
+                customerName: customerInfo?.name || '',
+                customerEmail: customerInfo?.email || '',
+                customerPhone: customerInfo?.phone || ''
+            });
+        }
+
+        if (customerInfo) {
+            if (req.user?.userId) conversation.user = req.user.userId;
+            conversation.customerName = customerInfo.name || conversation.customerName;
+            conversation.customerEmail = customerInfo.email || conversation.customerEmail;
+            conversation.customerPhone = customerInfo.phone || conversation.customerPhone;
+        }
+        if (quoteDetails) conversation.quoteDetails = quoteDetails;
+        if (quoteSubmitted) conversation.quoteSubmitted = true;
+
+        conversation.messages.push({ role: 'user', content: message });
+
+        const chatMessages = [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...conversation.messages.map(msg => ({
+                role: msg.role,
+                content: msg.content
+            }))
+        ];
+
+        // Get AI response
+        const completion = await openai.chat.completions.create({
+            model: model,
+            messages: chatMessages,
+            temperature: 0.7,
+            max_tokens: 1000
+        });
+
+        const aiResponse = completion.choices[0].message.content;
+
+        conversation.messages.push({ role: 'assistant', content: aiResponse });
+        await conversation.save();
+
+        res.json({
+            success: true,
+            conversationId: conversation._id,
+            response: aiResponse,
+            reply: aiResponse
+        });
+
+    } catch (error) {
+        console.error('❌ Chat Error:');
+        console.error(`   Model: ${model}`);
+        console.error(`   Error: ${error.message}`);
+        if (error.status) {
+            console.error(`   HTTP Status: ${error.status}`);
+        }
+
+        res.status(500).json({
+            success: false,
+            error: 'chat_error',
+            message: 'Sorry, something went wrong. Please email steam@volfram.in for assistance.',
+            reply: 'Sorry, something went wrong. Please email steam@volfram.in for assistance.'
+        });
+    }
+});
+
+// GET /api/chat/history/:conversationId - Get conversation history
+router.get('/history/:conversationId', async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        if (!mongoose.isValidObjectId(conversationId)) {
+            return res.status(400).json({ success: false, error: 'validation_error', message: 'Invalid conversation id' });
+        }
+
+        const conversation = await ChatbotLead.findById(conversationId).select('messages');
+        if (!conversation) {
+            return res.status(404).json({ success: false, error: 'conversation_not_found', message: 'Conversation not found' });
+        }
+
+        res.json({
+            success: true,
+            messages: conversation.messages
+        });
+
+    } catch (error) {
+        console.error('History error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'history_error',
+            message: error.message
+        });
+    }
+});
+
+module.exports = router;
