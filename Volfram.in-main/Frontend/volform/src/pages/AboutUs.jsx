@@ -50,7 +50,9 @@ function TextPanel({ title, points, tone = "dark" }) {
   const textClass = tone === "dark" ? "text-slate-100" : "text-primary";
   return (
     <div className={`${panelClass} h-full p-8 md:p-14`}>
-      <h3 className="font-heading text-3xl font-semibold uppercase tracking-wide">{title}</h3>
+      <h3 className={`font-heading text-3xl font-semibold uppercase tracking-wide ${tone === "dark" ? "text-white" : "text-primary"}`}>
+        {title}
+      </h3>
       <div className="mt-4 h-[1px] w-56 bg-current/35" />
       <ul className="mt-6 space-y-4">
         {points.map((point) => (

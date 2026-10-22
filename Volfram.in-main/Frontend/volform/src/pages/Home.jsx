@@ -39,30 +39,11 @@ export default function Home() {
         
         <div className="hero-combined-content">
           <div className="container-custom">
-            <h2 className="section-title white scroll-animate">We are Volfram</h2>
-            
-            <div className="stats-grid">
-              <div className="stat-card scroll-animate">
-                <div className="stat-icon">🌍</div>
-                <h3>Globally<br/>600+ Happy Customers</h3>
-              </div>
-              
-              <div className="stat-card scroll-animate">
-                <div className="condensate-icons">
-                  <span className="droplet">💧</span>
-                  <span className="droplet">💧</span>
-                  <span className="droplet">💧</span>
-                  <span className="droplet">💧</span>
-                  <span className="droplet">💧</span>
-                  <span className="droplet">💧</span>
-                </div>
-                <h3>Installed 422+ of Condensate recovery Systems which helped to recover Condensate in various Industry Segments</h3>
-              </div>
-              
-              <div className="stat-card scroll-animate">
-                <div className="stat-icon">🏭</div>
-                <h3>Glorious 14 years<br/>Serving the Industry</h3>
-              </div>
+            <div className="hero-copy scroll-animate">
+              <h1 className="hero-title">We are Volfram</h1>
+              <p className="hero-tagline">
+                Engineering smarter steam systems for a more efficient industry.
+              </p>
             </div>
           </div>
         </div>
@@ -139,9 +120,11 @@ export default function Home() {
           <div className="distributor-info">
             <h3>Principal Distributor for India, Bangladesh and Srilanka</h3>
             <div className="partner-logos">
-              <span>Walchem</span>
-              <span>•</span>
-              <span>Pyxis Lab</span>
+              <img
+                src="/Clients/walchem_iwaki_america_inc-275%20logo.avif"
+                alt="Walchem, an Iwaki America company"
+              />
+              <img src="/Clients/Pyxis%20logo.avif" alt="Pyxis Lab" />
             </div>
           </div>
         </div>
@@ -151,16 +134,16 @@ export default function Home() {
       <section className="sectors-section scroll-animate">
         <div className="container-custom">
           <div className="sectors-grid">
-            <div className="sector-card scroll-animate" style={{backgroundImage: 'linear-gradient(rgba(15,45,77,0.85), rgba(15,45,77,0.85)), url(/Clients/homepage.png)'}}>
+            <div className="sector-card scroll-animate" style={{backgroundImage: 'url("/Clients/volfram pharmaceutical_edited.avif")'}}>
               <h3>Pharmaceutical<br/>& Chemical</h3>
             </div>
-            <div className="sector-card scroll-animate" style={{backgroundImage: 'linear-gradient(rgba(15,45,77,0.85), rgba(15,45,77,0.85)), url(/Clients/homepage2.png)'}}>
+            <div className="sector-card scroll-animate" style={{backgroundImage: 'url("/Clients/Volfram food and beverages_edited.avif")'}}>
               <h3>Food &<br/>Beverage</h3>
             </div>
-            <div className="sector-card scroll-animate" style={{backgroundImage: 'linear-gradient(rgba(15,45,77,0.85), rgba(15,45,77,0.85)), url(/Clients/homepage3.png)'}}>
+            <div className="sector-card scroll-animate" style={{backgroundImage: 'url("/Clients/Volfram Textile and Paper  Projects.avif")'}}>
               <h3>Textile & Paper</h3>
             </div>
-            <div className="sector-card scroll-animate" style={{backgroundImage: 'linear-gradient(rgba(15,45,77,0.85), rgba(15,45,77,0.85)), url(/Clients/homepage.png)'}}>
+            <div className="sector-card scroll-animate" style={{backgroundImage: 'url("/Clients/volfram Oil and Gas.avif")'}}>
               <h3>Oil & Gas</h3>
             </div>
           </div>

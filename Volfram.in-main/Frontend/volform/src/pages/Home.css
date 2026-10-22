@@ -75,6 +75,30 @@
   margin: 0 auto;
 }
 
+.hero-copy {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-title {
+  margin: 0 0 20px;
+  color: #fff;
+  font-size: clamp(44px, 7vw, 82px);
+  font-weight: 800;
+  line-height: 1.08;
+  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.35);
+}
+
+.hero-tagline {
+  max-width: 720px;
+  margin: 0 auto;
+  color: #fff;
+  font-size: clamp(18px, 2vw, 26px);
+  line-height: 1.5;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+}
+
 /* Volfram Intro Section */
 .volfram-intro {
   padding: 80px 20px;
@@ -117,67 +141,6 @@
 
 .section-title.white {
   color: white;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.stat-card {
-  text-align: center;
-  padding: 50px 40px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.stat-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
-}
-
-.stat-icon {
-  font-size: 72px;
-  margin-bottom: 24px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-}
-
-.condensate-icons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 24px;
-  font-size: 32px;
-}
-
-.droplet {
-  animation: dropletFloat 2s ease-in-out infinite;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-}
-
-.droplet:nth-child(2) { animation-delay: 0.2s; }
-.droplet:nth-child(3) { animation-delay: 0.4s; }
-.droplet:nth-child(4) { animation-delay: 0.6s; }
-.droplet:nth-child(5) { animation-delay: 0.8s; }
-.droplet:nth-child(6) { animation-delay: 1s; }
-
-@keyframes dropletFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-
-.stat-card h3 {
-  font-size: 18px;
-  line-height: 1.6;
-  color: #0f2d4d;
-  font-weight: 600;
 }
 
 /* Engineering Section */
@@ -392,11 +355,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  font-size: 22px;
-  font-weight: 600;
-  color: #ffffff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+.partner-logos img {
+  display: block;
+  width: min(220px, 42vw);
+  height: 84px;
+  object-fit: contain;
 }
 
 /* Sectors Section */
@@ -715,10 +682,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .pharma-grid,
   .cta-grid {
     grid-template-columns: 1fr;

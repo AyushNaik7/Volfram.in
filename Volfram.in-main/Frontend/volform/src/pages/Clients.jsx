@@ -195,7 +195,7 @@ export default function Clients() {
                 <img
                   src={item.img}
                   alt={`client-${index}`}
-                  className="w-full h-40 object-contain grayscale hover:grayscale-0 transition duration-300"
+                  className="w-full h-40 object-contain"
                 />
               </div>
             ))}

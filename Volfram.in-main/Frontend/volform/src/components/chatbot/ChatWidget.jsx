@@ -725,6 +725,7 @@ const styles = {
     background: "#2d6a9f", color: "#fff",
     fontSize: 24, border: "none", cursor: "pointer",
     boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+    zIndex: 9999,
   },
   chipsWrapper: {
     display: "flex", flexWrap: "wrap", gap: 6,
