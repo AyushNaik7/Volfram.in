@@ -100,31 +100,50 @@ function handleChatError(error) {
     return 'Sorry, something went wrong. Please email steam@volfram.in for assistance.';
 }
 
-router.post('/chat/lead', authMiddleware, async (req, res) => {
+router.post('/chat/lead', optionalAuthMiddleware, async (req, res) => {
     try {
         const { session_id: sessionId, customerInfo, quoteDetails, message } = req.body;
-        if (!sessionId) return res.status(400).json({ success: false, message: 'Session ID is required.' });
-        const account = await Register.findById(req.user.userId).select('name email number');
-        if (!account) return res.status(404).json({ success: false, message: 'Logged-in user not found.' });
+        if (typeof sessionId !== 'string' || !sessionId.trim()) {
+            return res.status(400).json({ success: false, message: 'Session ID is required.' });
+        }
+
+        const account = req.user
+            ? await Register.findById(req.user.userId).select('name email number')
+            : null;
+        if (req.user && !account) {
+            return res.status(404).json({ success: false, message: 'Logged-in user not found.' });
+        }
+
+        const cleanContactValue = value => typeof value === 'string' ? value.trim() : '';
         const contact = {
-            name: account.name || customerInfo?.name,
-            email: account.email || customerInfo?.email,
-            phone: account.number || customerInfo?.phone
+            name: cleanContactValue(account?.name) || cleanContactValue(customerInfo?.name),
+            email: (cleanContactValue(account?.email) || cleanContactValue(customerInfo?.email)).toLowerCase(),
+            phone: cleanContactValue(account?.number) || cleanContactValue(customerInfo?.phone)
         };
-        if (!contact.name || !contact.email || !contact.phone) return res.status(400).json({ success: false, message: 'Your account is missing contact details.' });
+        if (!contact.name || !contact.email || !contact.phone) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name, email, and phone are required to submit a quotation request.'
+            });
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+            return res.status(400).json({ success: false, message: 'A valid email address is required.' });
+        }
 
         const lead = await ChatbotLead.findOneAndUpdate(
-            { sessionId },
+            { sessionId: sessionId.trim() },
             {
                 $set: {
-                    user: req.user.userId,
+                    ...(req.user ? { user: req.user.userId } : {}),
                     customerName: contact.name.trim(),
                     customerEmail: contact.email.trim().toLowerCase(),
                     customerPhone: contact.phone.trim(),
                     quoteDetails: quoteDetails || {},
                     quoteSubmitted: true
                 },
-                ...(message ? { $push: { messages: { role: 'user', content: message } } } : {})
+                ...(typeof message === 'string' && message.trim()
+                    ? { $push: { messages: { role: 'user', content: message.trim() } } }
+                    : {})
             },
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
