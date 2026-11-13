@@ -16,18 +16,6 @@ const Chatbot = () => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setMessages([
-        {
-          role: 'assistant',
-          content: 'Hello! Welcome to Volfram Systems. I can help you get a quotation for steam systems, boilers, PRDS, and other equipment. What product are you interested in?',
-          timestamp: new Date()
-        }
-      ]);
-    }
-  }, [isOpen]);
-
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -83,11 +71,24 @@ const Chatbot = () => {
     }
   };
 
+  const toggleChat = () => {
+    if (!isOpen && messages.length === 0) {
+      setMessages([
+        {
+          role: 'assistant',
+          content: 'Hello! Welcome to Volfram Systems. I can help you get a quotation for steam systems, boilers, PRDS, and other equipment. What product are you interested in?',
+          timestamp: new Date()
+        }
+      ]);
+    }
+    setIsOpen(!isOpen);
+  };
+
   return (
     <>
       {/* Chat Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleChat}
         className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all z-50"
       >
         {isOpen ? (
@@ -175,4 +176,3 @@ const Chatbot = () => {
 };
 
 export default Chatbot;
-

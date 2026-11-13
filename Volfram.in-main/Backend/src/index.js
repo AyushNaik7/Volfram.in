@@ -60,22 +60,12 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser()); // Parse cookies
 
-app.use((req, res, next) => {
-  console.log(`[REQUEST] pid=${process.pid} ${req.method} ${req.originalUrl}`);
-  next();
-});
-
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
-app.post("/test-register", (req, res) => {
-    console.log("🔥 TEST ROUTE RECEIVED REQUEST");
-    res.json({ message: "Test successful" });
-});
-
 // Import routes
 const enquiryRoutes = require("./routes/enquiry.routes.js");
 const authRoutes = require("./routes/auth.routes.js");

@@ -10,6 +10,7 @@
   } from "react-router-dom"
 
   import Layout from '../Layout.jsx'
+  import ScrollToTop from './components/ScrollToTop.jsx'
 
   import Home from './pages/Home.jsx'
   import About from './pages/AboutUs.jsx'
@@ -70,7 +71,7 @@ import LiquidPipeCalculator
 
     createRoutesFromElements(
 
-      <>
+      <Route element={<ScrollToTop />}>
 
         {/* Main site — with Header and Footer */}
         <Route path="/" element={<Layout />}>
@@ -197,12 +198,14 @@ import LiquidPipeCalculator
   path="/admin/calculators/saturated-steam-table"
   element={<SaturatedSteamTable />}
 /> 
-      </>
+      </Route>
 
     )
 
   )
 
+
+  window.history.scrollRestoration = 'manual'
 
   createRoot(document.getElementById('root')).render(
 

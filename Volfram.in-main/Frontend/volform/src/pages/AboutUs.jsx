@@ -107,7 +107,7 @@ export default function AboutUs() {
       </section>
 
       <section className="section-white py-0">
-        <img {...aboutImage(0, '/AboutUs/image.png', 'Volfram team')} className="h-[800px] w-full object-cover" />
+        <img {...aboutImage(0, '/AboutUs/image.png', 'Volfram team')} className="h-[360px] w-full object-cover md:h-[600px] lg:h-[800px]" />
       </section>
 
       <section className="section-white py-14">
@@ -124,13 +124,13 @@ export default function AboutUs() {
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <TextPanel title="Our Purpose" points={purposePoints} tone="dark" />
-          <img {...aboutImage(1, '/AboutUs/imagecopy.png', 'Volfram presentation')} className="h-[800px] w-full object-cover" />
+          <img {...aboutImage(1, '/AboutUs/imagecopy.png', 'Volfram presentation')} className="h-[360px] w-full object-cover md:h-[600px] lg:h-[800px]" />
         </div>
       </section>
 
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
-          <img {...aboutImage(2, '/AboutUs/imagecopy2.png', 'Volfram commitment')} className="h-[800px] w-full object-cover md:order-1" />
+          <img {...aboutImage(2, '/AboutUs/imagecopy2.png', 'Volfram commitment')} className="h-[360px] w-full object-cover md:order-1 md:h-[600px] lg:h-[800px]" />
           <div className="md:order-2">
             <TextPanel title="Our Commitment" points={commitmentPoints} tone="light" />
           </div>
@@ -140,10 +140,9 @@ export default function AboutUs() {
       <section className="section-white py-0">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <TextPanel title="Our Passion" points={passionPoints} tone="dark" />
-          <img {...aboutImage(3, '/AboutUs/imagecopy3.png', 'Volfram annual meet')} className="h-[800px] w-full object-cover" />
+          <img {...aboutImage(3, '/AboutUs/imagecopy3.png', 'Volfram annual meet')} className="h-[360px] w-full object-cover md:h-[600px] lg:h-[800px]" />
         </div>
       </section>
     </div>
   );
 }
-

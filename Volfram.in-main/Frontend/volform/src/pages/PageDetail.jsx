@@ -6,26 +6,50 @@ const API_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:5000";
 export default function PageDetail() {
   const { id } = useParams();
   const [page, setPage]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState(null);
   const [error, setError]     = useState("");
+  const loading = loadedId !== id;
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}/api/public-pages`)
-      .then(r => r.json())
-      .then(data => {
+    let cancelled = false;
+
+    const loadPage = async () => {
+      try {
+        const pagesResponse = await fetch(`${API_URL}/api/public-pages`);
+        if (!pagesResponse.ok) throw new Error("Failed to load page.");
+        const data = await pagesResponse.json();
         const found = (data.pages || []).find(p => p._id === id);
-        if (found) {
-          // fetch full page detail
-          return fetch(`${API_URL}/api/public-pages/${id}`)
-            .then(r => r.json())
-            .then(d => setPage(d.page || found));
-        } else {
-          setError("Page not found.");
+
+        if (!found) {
+          if (!cancelled) {
+            setPage(null);
+            setError("Page not found.");
+          }
+          return;
         }
-      })
-      .catch(() => setError("Failed to load page."))
-      .finally(() => setLoading(false));
+
+        const pageResponse = await fetch(`${API_URL}/api/public-pages/${id}`);
+        if (!pageResponse.ok) throw new Error("Failed to load page.");
+        const detail = await pageResponse.json();
+
+        if (!cancelled) {
+          setPage(detail.page || found);
+          setError("");
+        }
+      } catch {
+        if (!cancelled) {
+          setPage(null);
+          setError("Failed to load page.");
+        }
+      } finally {
+        if (!cancelled) setLoadedId(id);
+      }
+    };
+
+    loadPage();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) {
@@ -99,4 +123,3 @@ export default function PageDetail() {
     </div>
   );
 }
-

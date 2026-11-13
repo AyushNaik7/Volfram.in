@@ -2865,6 +2865,7 @@ const calculateTankDimensionsAndWeight = async (req, res) => {
       // End plate weight = thickness * numberOfEndPlates * density
 
       const endPlateVolume =
+        endPlateArea *
         thicknessMeter *
         endPlates;
 
@@ -3195,7 +3196,7 @@ const calculateHeatingCoolingSystem = async (req, res) => {
     // ======================================
 
     const coolingDeltaT =
-      coolingWaterOutlet - coolingWaterInlet;
+      coolingWaterInlet - coolingWaterOutlet;
 
     const chilledWaterDeltaT =
       chilledWaterOutlet - chilledWaterInlet;
@@ -4321,8 +4322,10 @@ const calculateFAboilerCapacity = async (req, res) => {
     const latentHeatDifference =
       (steamData.totalHeat - atmosphericHeat - feedWaterTemp) /
       atmosphericHeat;
-    const capacityDifference = latentHeatDifference * capacity;
-    const netSteamDelivery = capacity - capacityDifference;
+    const netSteamDelivery =
+      (capacity * atmosphericHeat) /
+      (steamData.totalHeat - feedWaterTemp);
+    const capacityDifference = capacity - netSteamDelivery;
 
     return res.status(200).json({
       success: true,

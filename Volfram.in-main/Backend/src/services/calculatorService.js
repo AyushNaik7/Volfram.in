@@ -166,7 +166,7 @@ class CalculatorService {
       const flashSteam = (condensateQty * flashPercentage) / 100;
       
       // Heat recovered in flash steam
-      const flashHeatRecovered = flashSteam * flashProps.latent_heat;
+      const flashHeatRecovered = flashSteam * flashProps.total_heat;
       
       // Equivalent fuel saving
       const fuelSavingFlash = flashHeatRecovered / (gcv * (boilerEfficiency / 100));
@@ -181,7 +181,7 @@ class CalculatorService {
       const balanceCondensate = condensateQty - flashSteam;
       
       // Total heat in condensate
-      const condensateHeat = balanceCondensate * condensateProps.sensible_heat;
+      const condensateHeat = balanceCondensate * flashProps.sensible_heat;
       
       // Fuel saving from condensate
       const fuelSavingCondensate = condensateHeat / (gcv * (boilerEfficiency / 100));

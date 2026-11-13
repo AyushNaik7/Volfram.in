@@ -119,7 +119,7 @@ async function run() {
   assert.equal(faCapacity.statusCode, 200);
   assert.equal(
     faCapacity.value.data.result.netSteamDelivery.value.toFixed(5),
-    "10499.33333"
+    "10666.13994"
   );
 
   // #20 General ASME Pipe Wall Thickness (PASS baseline)
@@ -383,15 +383,15 @@ async function run() {
   assert.equal(tank.value.success, true);
   {
     const totalWeight = tank.value.data.result.totalTankWeight.value;
-    // Excel total = 670.99 kg (shell=576.79, endPlates=94.20)
-    assert.equal(totalWeight.toFixed(2), "670.99");
+    // Shell = 576.79 kg; circular end plates include their full area.
+    assert.equal(totalWeight.toFixed(2), "743.17");
     assert.equal(
       tank.value.data.calculationSteps.shellWeight.value.toFixed(2),
       "576.79"
     );
     assert.equal(
       tank.value.data.calculationSteps.endPlateWeight.value.toFixed(2),
-      "94.20"
+      "166.38"
     );
   }
 
@@ -420,6 +420,14 @@ async function run() {
   });
   assert.equal(heatCool.statusCode, 200);
   assert.equal(heatCool.value.success, true);
+  assert.equal(
+    heatCool.value.data.coolingSystem.chilledWaterFlowRate.value.toFixed(2),
+    "30.00"
+  );
+  assert.equal(
+    heatCool.value.data.coolingSystem.chilledWaterLineSize.value.toFixed(2),
+    "72.86"
+  );
   {
     // Steam required = (25*1000*1*10)/506.4 = 493.68 kg/hr
     assert.equal(

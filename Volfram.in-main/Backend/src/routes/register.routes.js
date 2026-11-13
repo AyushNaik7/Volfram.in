@@ -8,20 +8,17 @@ const hashOtp = (otp) => crypto.createHash('sha256').update(otp).digest('hex');
 const createOtp = () => String(crypto.randomInt(100000, 1000000));
 
 const issueVerificationOtp = async (user) => {
-  console.log(`[REGISTER] issueVerificationOtp reached for ${user.email}`);
   const otp = createOtp();
   user.verificationOtpHash = hashOtp(otp);
   user.verificationOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
   user.verificationOtpAttempts = 0;
   await user.save();
-  console.log(`[REGISTER] calling sendEmail for ${user.email}`);
   await sendEmail(user.email, user.verificationToken, otp);
 };
 
 router.post("/register", async (req, res) => {
-  console.log(`[REGISTER] route reached, pid=${process.pid}, email=${req.body.email}`);
   try {
-    const { name, email, number, password, confirmPassword, role } = req.body;
+    const { name, email, number, password, confirmPassword } = req.body;
 
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match ❌" });
@@ -41,23 +38,18 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Only allow 'user' or 'admin'; default to 'user' for any other value
-    const allowedRoles = ['user', 'admin'];
-    const assignedRole = allowedRoles.includes(role) ? role : 'user';
-
     const newUser = new User({
       name,
       email,
       number,
       password: hashedPassword,
       verificationToken: token,
-      role: assignedRole
+      role: 'user'
     });
 
     await newUser.save();
 
     try {
-      console.log("📧 About to call issueVerificationOtp");
       await issueVerificationOtp(newUser);
     } catch (emailError) {
       await User.deleteOne({ _id: newUser._id });

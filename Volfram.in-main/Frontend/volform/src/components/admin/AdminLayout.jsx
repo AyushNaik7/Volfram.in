@@ -25,10 +25,34 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
   };
 
   return (
-    <div style={styles.container}>
+    <>
+    <style>{`
+      @media (max-width: 760px) {
+        .admin-layout { flex-direction: column; }
+        .admin-sidebar {
+          width: 100% !important;
+          padding: 16px !important;
+        }
+        .admin-sidebar-logo {
+          margin-bottom: 16px !important;
+          padding-bottom: 12px !important;
+        }
+        .admin-nav {
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .admin-main { min-width: 0; }
+        .admin-header {
+          padding: 14px 16px !important;
+          gap: 12px;
+        }
+        .admin-content { padding: 16px !important; }
+      }
+    `}</style>
+    <div className="admin-layout" style={styles.container}>
       {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.logo}>
+      <aside className="admin-sidebar" style={styles.sidebar}>
+        <div className="admin-sidebar-logo" style={styles.logo}>
           <img
             src="/Clients/logo.png"
             alt="Volfram Systems"
@@ -37,7 +61,7 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
           <h2 style={styles.logoText}>Volfram Admin</h2>
         </div>
 
-        <nav style={styles.nav}>
+        <nav className="admin-nav" style={styles.nav}>
           <button style={{ ...styles.navItem, ...(activeSection === 'users' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('users')}><span style={styles.navIcon}>👥</span>Registered Candidates</button>
           <button style={{ ...styles.navItem, ...(activeSection === 'enquiries' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('enquiries')}><span style={styles.navIcon}>✉️</span>User Enquiries</button>
           <button style={{ ...styles.navItem, ...(activeSection === 'requirements' ? styles.navItemActive : {}) }} onClick={() => onSectionChange('requirements')}><span style={styles.navIcon}>📋</span>Requirements</button>
@@ -80,9 +104,9 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
       </aside>
 
       {/* Main Content */}
-      <div style={styles.main}>
+      <div className="admin-main" style={styles.main}>
         {/* Header */}
-        <header style={styles.header}>
+        <header className="admin-header" style={styles.header}>
           <h1 style={styles.headerTitle}>Admin Dashboard</h1>
           <button
             style={styles.logoutBtn}
@@ -94,11 +118,12 @@ function AdminLayout({ children, activeSection, onSectionChange }) {
         </header>
 
         {/* Content Area */}
-        <div style={styles.content}>
+        <div className="admin-content" style={styles.content}>
           {children}
         </div>
       </div>
     </div>
+    </>
   );
 }
 

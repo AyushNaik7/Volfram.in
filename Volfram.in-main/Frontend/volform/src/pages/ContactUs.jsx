@@ -22,7 +22,7 @@ export default function ContactUs() {
     message: "",
     service: "",
   });
-    const  [loading,setloading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
 
@@ -37,7 +37,7 @@ export default function ContactUs() {
 const handleSubmit = async (e) => {
   e.preventDefault();
   console.log("Submit clicked");
-  setloading(true);
+  setLoading(true);
   setStatus("");
 
   try {
@@ -75,11 +75,10 @@ const handleSubmit = async (e) => {
 
   } catch (error) {
     console.error("Form submission error:", error);
-    alert("Error submitting form");
     setStatus("error");
   }
   finally{
-    setloading(false);
+    setLoading(false);
   }
 };
 
@@ -146,6 +145,16 @@ const handleSubmit = async (e) => {
               <button type="submit" className="btn-cta w-full" disabled={loading}>
   {loading ? "Submitting..." : "Submit Enquiry"}
 </button>
+                            {status && (
+                              <p
+                                className={status === "success" ? "text-sm text-green-700" : "text-sm text-red-700"}
+                                role={status === "success" ? "status" : "alert"}
+                              >
+                                {status === "success"
+                                  ? "Your enquiry was sent successfully. We will be in touch soon."
+                                  : "We couldn't send your enquiry. Please try again or email steam@volfram.in."}
+                              </p>
+                            )}
             </form>
           </article>
 
@@ -184,4 +193,3 @@ const handleSubmit = async (e) => {
     </div>
   );
 }
-

@@ -14,14 +14,18 @@ async function createAdminUser() {
     await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
     console.log('Connected to MongoDB ✅');
 
-    // Admin user details
+    // Keep administrator credentials out of source control.
     const adminData = {
-      name: 'Admin User',
-      email: 'admin@volfram.com',
-      password: 'admin123', // Change this to a secure password
-      number: '9999999999',
+      name: process.env.ADMIN_NAME?.trim(),
+      email: process.env.ADMIN_EMAIL?.trim().toLowerCase(),
+      password: process.env.ADMIN_PASSWORD,
+      number: process.env.ADMIN_PHONE?.trim(),
       role: 'admin'
     };
+
+    if (!adminData.name || !adminData.email || !adminData.password || !adminData.number) {
+      throw new Error('Set ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD, and ADMIN_PHONE before creating an admin user.');
+    }
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email: adminData.email });
@@ -48,8 +52,6 @@ async function createAdminUser() {
 
     console.log('✅ Admin user created successfully!');
     console.log('Email:', adminData.email);
-    console.log('Password:', adminData.password);
-    console.log('⚠️  Please change the password after first login!');
 
     process.exit(0);
 

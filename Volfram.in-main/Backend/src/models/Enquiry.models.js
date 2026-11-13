@@ -14,17 +14,20 @@ const mongoose = require("mongoose");
   trim: true
     },
     phone:{
-         type: String,
-  required: true,
-  match: [/^(\+91)?[6-9][0-9]{9}$/, "Please enter valid phone number"]
+        type: String,
+        trim: true,
+        validate: {
+          validator: value => !value || /^(\+91)?[6-9][0-9]{9}$/.test(value),
+          message: "Please enter valid phone number"
+        }
     },
     companyName:{
         type:String,
-        required:true
+        trim: true
     },
     serviceOfInterest:{
         type:String,
-        required:true
+        trim: true
     },
     subject:{
         type:String,

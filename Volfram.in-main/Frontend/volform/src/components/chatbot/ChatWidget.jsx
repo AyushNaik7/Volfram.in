@@ -599,10 +599,11 @@ export default function ChatWidget() {
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 const styles = {
   container: {
-    width: 420, height: 640,
+    width: "min(420px, calc(100% - 32px))",
+    height: "min(640px, calc(100vh - 100px))",
     display: "flex", flexDirection: "column",
     borderRadius: 16, overflow: "hidden",
-    position: "fixed", bottom: 20, right: 20,
+    position: "fixed", bottom: 16, right: 16,
     background: "#fff",
     boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
     zIndex: 9999,
@@ -746,4 +747,3 @@ const styles = {
     fontSize: 11, color: "#718096", marginBottom: 4, fontWeight: 500,
   },
 };
-

@@ -1,8 +1,6 @@
 const { BrevoClient } = require("@getbrevo/brevo");
 
 const sendEmail = async (email, token, otp) => {
-    console.log(`[MAIL] sendEmail reached, pid=${process.pid}, recipient=${email}`);
-
     const apiKey = process.env.BREVO_API_KEY?.trim();
     const senderEmail = process.env.BREVO_SENDER_EMAIL?.trim();
     const senderName = process.env.BREVO_SENDER_NAME?.trim() || "Volfram.in";
@@ -47,7 +45,7 @@ const sendEmail = async (email, token, otp) => {
             `
         });
 
-        console.log("Email sent successfully to:", email);
+        console.log("Verification email sent successfully.");
 
     } catch (error) {
 
