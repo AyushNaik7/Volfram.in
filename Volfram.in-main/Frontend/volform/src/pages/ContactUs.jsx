@@ -11,6 +11,17 @@ const services = [
   "Other",
 ];
 
+const officeLocations = [
+  {
+    name: "Corporate / Admin Office",
+    address: "402, Rutuvihar, Waranasi Society, Warje, Pune - 411058",
+  },
+  {
+    name: "Manufacturing Unit",
+    address: "Akurdi Industrial Estate, D-1 Block, MIDC, Chinchwad, Pune - 411019",
+  },
+];
+
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
@@ -172,14 +183,12 @@ const handleSubmit = async (e) => {
             <article className="card">
               <h3 className="text-xl text-primary">Office Locations</h3>
               <div className="mt-4 space-y-4 text-sm">
-                <div>
-                  <p className="font-semibold text-text-primary">Corporate / Admin Office</p>
-                  <p className="mt-1">402, Rutuvihar, Waranasi Society, Warje, Pune - 411058</p>
-                </div>
-                <div>
-                  <p className="font-semibold text-text-primary">Manufacturing Unit</p>
-                  <p className="mt-1">Akurdi Industrial Estate, D-1 Block, MIDC, Chinchwad, Pune - 411019</p>
-                </div>
+                {officeLocations.map((location) => (
+                  <div key={location.name}>
+                    <p className="font-semibold text-text-primary">{location.name}</p>
+                    <p className="mt-1">{location.address}</p>
+                  </div>
+                ))}
               </div>
             </article>
 
@@ -187,6 +196,47 @@ const handleSubmit = async (e) => {
               <h3 className="text-xl text-white">Why Teams Trust Us</h3>
               <p className="subtext mt-2">600+ customers, 422+ installations and 12+ years of proven support across industries.</p>
             </article>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-white pt-0">
+        <div className="container-custom">
+          <div className="mb-6">
+            <span className="badge-industrial mb-3">Find Us</span>
+            <h2 className="text-3xl text-primary">Our Locations</h2>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {officeLocations.map((location) => {
+              const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(location.address)}&z=15&output=embed`;
+              const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`;
+
+              return (
+                <article className="card p-0" key={location.name}>
+                  <div className="p-5">
+                    <h3 className="text-xl text-primary">{location.name}</h3>
+                    <p className="mt-1 text-sm text-text-secondary">{location.address}</p>
+                  </div>
+                  <iframe
+                    className="h-72 w-full border-0"
+                    src={mapUrl}
+                    title={`Google Map: ${location.name}`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <div className="p-5 pt-4">
+                    <a
+                      className="btn-outline-primary inline-block px-4 py-2"
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Get Directions
+                    </a>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
