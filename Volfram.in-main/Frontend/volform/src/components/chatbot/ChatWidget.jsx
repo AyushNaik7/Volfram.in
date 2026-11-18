@@ -3,7 +3,8 @@ import axios from "axios";
 import { getAccessToken, getUser } from '../../services/api';
 
 // Environment variable for chatbot API URL
-const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL || "http://localhost:5000";
+const CHATBOT_API_URL = import.meta.env.VITE_CHATBOT_API_URL ||
+  (import.meta.env.PROD ? "https://volfram-in.onrender.com" : "http://localhost:5000");
 const authConfig = () => {
   const token = getAccessToken();
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
