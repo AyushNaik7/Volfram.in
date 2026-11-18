@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node test/calculator.smoke.test.js",
+    "test": "node test/calculator.smoke.test.js && node test/chatbot.guest-lead.test.js",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "check-chatbot": "node check-chatbot.js"

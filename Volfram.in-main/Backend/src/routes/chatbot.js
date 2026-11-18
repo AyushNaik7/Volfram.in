@@ -100,27 +100,34 @@ function handleChatError(error) {
     return 'Sorry, something went wrong. Please email steam@volfram.in for assistance.';
 }
 
-router.post('/chat/lead', authMiddleware, async (req, res) => {
+router.post('/chat/lead', optionalAuthMiddleware, async (req, res) => {
     try {
         const { session_id: sessionId, customerInfo, quoteDetails, message } = req.body;
         if (!sessionId) return res.status(400).json({ success: false, message: 'Session ID is required.' });
-        const account = await Register.findById(req.user.userId).select('name email number');
-        if (!account) return res.status(404).json({ success: false, message: 'Logged-in user not found.' });
+        const account = req.user?.userId
+            ? await Register.findById(req.user.userId).select('name email number')
+            : null;
+        if (req.user?.userId && !account) return res.status(404).json({ success: false, message: 'Logged-in user not found.' });
         const contact = {
-            name: account.name || customerInfo?.name,
-            email: account.email || customerInfo?.email,
-            phone: account.number || customerInfo?.phone
+            name: account?.name || customerInfo?.name,
+            email: account?.email || customerInfo?.email,
+            phone: account?.number || customerInfo?.phone
         };
-        if (!contact.name || !contact.email || !contact.phone) return res.status(400).json({ success: false, message: 'Your account is missing contact details.' });
+        const name = typeof contact.name === 'string' ? contact.name.trim() : '';
+        const email = typeof contact.email === 'string' ? contact.email.trim().toLowerCase() : '';
+        const phone = typeof contact.phone === 'string' ? contact.phone.trim() : '';
+        if (!name || !email || !phone) {
+            return res.status(400).json({ success: false, message: 'Name, email, and mobile number are required.' });
+        }
 
         const lead = await ChatbotLead.findOneAndUpdate(
             { sessionId },
             {
                 $set: {
-                    user: req.user.userId,
-                    customerName: contact.name.trim(),
-                    customerEmail: contact.email.trim().toLowerCase(),
-                    customerPhone: contact.phone.trim(),
+                    user: req.user?.userId || null,
+                    customerName: name,
+                    customerEmail: email,
+                    customerPhone: phone,
                     quoteDetails: quoteDetails || {},
                     quoteSubmitted: true
                 },
